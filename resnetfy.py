@@ -196,11 +196,13 @@ class Resnet50(nn.Module):
         x = self.bottleneck_1(x)
         x = self.identity_block_1_1(x)
         x = self.identity_block_1_2(x)
+        x = x * SpatialAttn_whr(x)
         # print(x.size())
         x = self.bottleneck_2(x)
         x = self.identity_block_2_1(x)
         x = self.identity_block_2_2(x)
         x = self.identity_block_2_3(x)
+
         # print(x.size())
         x = self.bottleneck_3(x)
         x = self.identity_block_3_1(x)
