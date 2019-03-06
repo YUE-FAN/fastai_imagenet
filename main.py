@@ -28,12 +28,12 @@ path = Path('/fan/datasets/imagenet/')
 ds_tfms = ([*rand_resize_crop(224), flip_lr(p=0.5)], [])
 # ds_tfms = None
 # n_gpus = 4
-data = ImageDataBunch.from_folder(path, valid='val', ds_tfms=ds_tfms,  bs=256//8, num_workers=10, size=224).normalize(imagenet_stats)
+data = ImageDataBunch.from_folder(path, valid='val', ds_tfms=ds_tfms,  bs=512//8, num_workers=8, size=224).normalize(imagenet_stats)
 
 # learn = Learner(data, resnet50(), metrics=accuracy)
 
 learn = Learner(data, Resnet50(0, 1000, True, 99), metrics=[accuracy, top_k_accuracy]).distributed(args.local_rank)
-learn.to_fp16()
+learn.to_fp32()
 # learn.model = nn.parallel.DistributedDataParallel(learn.model)
 # learn.model = nn.DataParallel(learn.model)
 # print(learn.summary())
