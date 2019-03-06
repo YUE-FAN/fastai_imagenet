@@ -22,17 +22,18 @@ def center_crop(size:int):
 
 print(num_cpus())
 print("sadsadsad")
-path = untar_data(URLs.CIFAR, dest="./data/")
+# path = untar_data(URLs.CIFAR, dest="./data/")
+path = Path('/fan/datasets/imagenet/')
 # tfms = [rand_resize_crop(224), flip_lr(p=0.5)]
-ds_tfms = ([*rand_pad(4, 32), flip_lr(p=0.5)], [*center_crop(32)])
+ds_tfms = ([*rand_resize_crop(224), flip_lr(p=0.5)], [])
 # ds_tfms = None
 # n_gpus = 4
-data = ImageDataBunch.from_folder(path, valid='test', ds_tfms=ds_tfms,  bs=512, num_workers=6).normalize(cifar_stats)
+data = ImageDataBunch.from_folder(path, valid='val', ds_tfms=ds_tfms,  bs=256//8, num_workers=10, size=224).normalize(imagenet_stats)
 
 # learn = Learner(data, resnet50(), metrics=accuracy)
 
-learn = Learner(data, Resnet50(0, 10, True, 99), metrics=[accuracy, top_k_accuracy]).distributed(args.local_rank)
-learn.to_fp32()
+learn = Learner(data, Resnet50(0, 1000, True, 99), metrics=[accuracy, top_k_accuracy]).distributed(args.local_rank)
+learn.to_fp16()
 # learn.model = nn.parallel.DistributedDataParallel(learn.model)
 # learn.model = nn.DataParallel(learn.model)
 # print(learn.summary())
