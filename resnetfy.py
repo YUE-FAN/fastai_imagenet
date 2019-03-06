@@ -13,12 +13,13 @@ def SpatialAttn_whr(x):
     return a
 
 
+
 def ChannelAttn_whr(x):
     """Channel Attention"""
     x_shape = x.size()
     x = x.view(x_shape[0], x_shape[1], -1)  # [bs, c, h*w]
     a = x.sum(-1, keepdim=False)  # [bs, c]
-    a = a / a.sum(1, keepdim=True)  # [bs, c]
+    a /= a.sum(1, keepdim=True)  # [bs, c]
     a = a.unsqueeze(-1).unsqueeze(-1)
     return a
 
@@ -178,7 +179,7 @@ class Resnet50(nn.Module):
 
         self.avgpool = nn.AvgPool2d(4)  # TODO: check the final size
         self.fc = nn.Linear(512*4, num_classes)
-
+        # self.sa = SpatialAttn_whr()
         # Initialize the weights
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -196,13 +197,13 @@ class Resnet50(nn.Module):
         x = self.bottleneck_1(x)
         x = self.identity_block_1_1(x)
         x = self.identity_block_1_2(x)
-        x = x * SpatialAttn_whr(x)
+
         # print(x.size())
         x = self.bottleneck_2(x)
         x = self.identity_block_2_1(x)
         x = self.identity_block_2_2(x)
         x = self.identity_block_2_3(x)
-
+        x = x * SpatialAttn_whr(x)
         # print(x.size())
         x = self.bottleneck_3(x)
         x = self.identity_block_3_1(x)
