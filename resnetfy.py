@@ -177,7 +177,7 @@ class Resnet50(nn.Module):
         else:
             self.identity_block_4_2 = identity_block3_dconv(512, [128, 128, 512], kernel_size=3, type=type)
 
-        self.avgpool = nn.AvgPool2d(4)  # TODO: check the final size
+        self.avgpool = nn.AvgPool2d(7)  # TODO: check the final size
         self.fc = nn.Linear(512*4, num_classes)
         # self.sa = SpatialAttn_whr()
         # Initialize the weights
@@ -223,4 +223,3 @@ class Resnet50(nn.Module):
             # TODO: why there is no dropout
             x = self.fc(x)
         return x
-
