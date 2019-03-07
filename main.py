@@ -2,7 +2,7 @@ from fastai.vision import *
 from fastai.vision.models import resnet50
 from resnetfy import Resnet50
 from fastai.distributed import *
-
+from fastai.callbacks import SaveModelCallback
 from vggfy import VGG16
 
 from fastai.distributed import *
@@ -14,9 +14,36 @@ args = parser.parse_args()
 torch.cuda.set_device(args.local_rank)
 torch.distributed.init_process_group(backend='nccl', init_method='env://')
 
-def center_crop(size:int):
-    return [crop(size=size)]
 
+class my_CSVLogger(LearnerCallback):
+    def __init__(self, learn:Learner, filename: str = 'history'):
+        super().__init__(learn)
+        self.filename,self.path = filename,self.learn.path/f'{filename}.csv'
+        self.names = ['epoch', 'train_loss', 'valid_loss', 'accuracy', 'top_k_accuracy', 'lr']
+
+    def read_logged_file(self):
+        "Read the content of saved file"
+        return pd.read_csv(self.path)
+
+    def on_train_begin(self, **kwargs: Any) -> None:
+        "Prepare file with metric names."
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.file = self.path.open('w')
+        self.file.write(','.join(self.names) + '\n')
+
+    def on_epoch_end(self, epoch: int, smooth_loss: Tensor, last_metrics: MetricsList, **kwargs: Any) -> bool:
+        "Add a line with `epoch` number, `smooth_loss` and `last_metrics`."
+        last_metrics = ifnone(last_metrics, [])
+        stats = [str(stat) if isinstance(stat, int) else f'{stat:.6f}'
+                 for name, stat in zip(self.names, [epoch, smooth_loss] + last_metrics)]
+        stats.append(str(self.learn.recorder.lrs[-1]))
+        print(stats)
+        str_stats = ','.join(stats)
+        self.file.write(str_stats + '\n')
+
+    def on_train_end(self, **kwargs: Any) -> None:
+        "Close the file."
+        self.file.close()
 
 
 
@@ -30,8 +57,8 @@ ds_tfms = ([*rand_resize_crop(224), flip_lr(p=0.5)], [])
 data = ImageDataBunch.from_folder(path, valid='val', ds_tfms=ds_tfms, bs=256//8, num_workers=8, size=224, resize_method=ResizeMethod.CROP).normalize(imagenet_stats)
 
 # learn = Learner(data, resnet50(), metrics=accuracy)
-
-learn = Learner(data, Resnet50(0, 1000, True, 99), metrics=[accuracy, top_k_accuracy]).distributed(args.local_rank)
+optm = partial(optim.SGD, momentum=0.9)
+learn = Learner(data, Resnet50(0, 1000, True, 99), opt_func=optm, metrics=[accuracy, top_k_accuracy]).distributed(args.local_rank)
 learn.to_fp32()
 # learn.model = nn.parallel.DistributedDataParallel(learn.model)
 # learn.model = nn.DataParallel(learn.model)
@@ -40,7 +67,10 @@ learn.to_fp32()
 
 
 print('start training...')
-learn.fit_one_cycle(35, 3e-3, wd=0.4)
+csver = my_CSVLogger(learn, filename='log')
+best_saver = SaveModelCallback(learn, every='improvement', monitor='accuracy', name='Resnet50_best')
+checkpoint = SaveModelCallback(learn, every='epoch', name='checkpoint')
+learn.fit_one_cycle(100, 0.3, wd=0.4, callbacks=[best_saver, checkpoint, csver])
 
 
 # data = ImageDataBunch.from_folder(path, valid='test', ds_tfms=(tfms, []), bs=512).normalize(cifar_stats)
