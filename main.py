@@ -24,11 +24,10 @@ print(num_cpus())
 print("sadsadsad")
 # path = untar_data(URLs.CIFAR, dest="./data/")
 path = Path('/fan/datasets/imagenet/')
-# tfms = [rand_resize_crop(224), flip_lr(p=0.5)]
 ds_tfms = ([*rand_resize_crop(224), flip_lr(p=0.5)], [])
 # ds_tfms = None
 # n_gpus = 4
-data = ImageDataBunch.from_folder(path, valid='val', ds_tfms=ds_tfms,  bs=512//8, num_workers=8, size=224).normalize(imagenet_stats)
+data = ImageDataBunch.from_folder(path, valid='val', ds_tfms=ds_tfms, bs=256//8, num_workers=8, size=224, resize_method=ResizeMethod.CROP).normalize(imagenet_stats)
 
 # learn = Learner(data, resnet50(), metrics=accuracy)
 
