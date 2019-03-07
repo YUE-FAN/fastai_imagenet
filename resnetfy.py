@@ -7,8 +7,8 @@ def SpatialAttn_whr(x):
     """Spatial Attention"""
     x_shape = x.size()
     a = x.sum(1, keepdim=True)
-    a = a.view(x_shape[0], -1)
-    a = a / a.sum(1, keepdim=True)
+    a = a.view(x_shape[0], -1).to(torch.float16)
+    a = a.to(torch.float16) / a.sum(1, keepdim=True).to(torch.float16)
     a = a.view(x_shape[0], 1, x_shape[2], x_shape[3])
     return a
 
@@ -25,10 +25,10 @@ def ChannelAttn_whr(x):
 
 
 def conv_1_3x3():
-    return nn.Sequential(nn.Conv2d(3, 16*4, kernel_size=3, stride=2, padding=1, bias=False),  # 'SAME'
+    return nn.Sequential(nn.Conv2d(3, 16*4, kernel_size=7, stride=2, padding=3, bias=False),  # 'SAME'
                          nn.BatchNorm2d(16*4),
-                         nn.ReLU(inplace=True))
-                         # TODO: nn.MaxPool2d(kernel_size=3, stride=2, padding=0))  # 'valid'
+                         nn.ReLU(inplace=True),
+                         nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
 
 
 class identity_block3(nn.Module):
@@ -110,7 +110,7 @@ class Resnet50(nn.Module):
         self.conv_3x3 = conv_1_3x3()  # TODO: check if you are using dconv3x3
 
         if layer > 10:
-            self.bottleneck_1 = bottleneck(16*4, [16*4, 16*4, 64*4], kernel_size=3, strides=(2, 2))
+            self.bottleneck_1 = bottleneck(16*4, [16*4, 16*4, 64*4], kernel_size=3, strides=(1, 1))
         else:
             self.bottleneck_1 = bottleneck_dconv(16, [16, 16, 64], kernel_size=3, strides=(1, 1), type=type)
         if layer > 11:
@@ -177,7 +177,7 @@ class Resnet50(nn.Module):
         else:
             self.identity_block_4_2 = identity_block3_dconv(512, [128, 128, 512], kernel_size=3, type=type)
 
-        self.avgpool = nn.AvgPool2d(7)  # TODO: check the final size
+        self.avgpool = nn.AvgPool2d(4)  # TODO: check the final size
         self.fc = nn.Linear(512*4, num_classes)
         # self.sa = SpatialAttn_whr()
         # Initialize the weights
@@ -203,7 +203,7 @@ class Resnet50(nn.Module):
         x = self.identity_block_2_1(x)
         x = self.identity_block_2_2(x)
         x = self.identity_block_2_3(x)
-        #x = x * SpatialAttn_whr(x)
+        x = x * SpatialAttn_whr(x)
         # print(x.size())
         x = self.bottleneck_3(x)
         x = self.identity_block_3_1(x)
@@ -223,3 +223,4 @@ class Resnet50(nn.Module):
             # TODO: why there is no dropout
             x = self.fc(x)
         return x
+
