@@ -2,7 +2,7 @@ from fastai.vision import *
 from fastai.vision.models import resnet50
 from resnetfy import Resnet50
 from fastai.distributed import *
-from fastai.callbacks import SaveModelCallback
+from fastai.callbacks import SaveModelCallback, ReduceLROnPlateauCallback
 from vggfy import VGG16
 
 from fastai.distributed import *
@@ -67,10 +67,12 @@ learn.to_fp32()
 
 
 print('start training...')
-csver = my_CSVLogger(learn, filename='log')
-best_saver = SaveModelCallback(learn, every='improvement', monitor='accuracy', name='Resnet50_best')
-checkpoint = SaveModelCallback(learn, every='epoch', name='checkpoint')
-learn.fit_one_cycle(100, 0.3, wd=0.4, callbacks=[best_saver, checkpoint, csver])
+lr_scheduler = ReduceLROnPlateauCallback(learn, patience=5, factor=0.1, monitor='accuracy', min_delta=0)
+csver = my_CSVLogger(learn, filename='/logfiles/log')
+best_saver = SaveModelCallback(learn, every='improvement', monitor='accuracy', name='/trained-models/Resnet50_best')
+checkpoint = SaveModelCallback(learn, every='epoch', name='/trained-models/checkpoint')
+learn.fit(120, 0.1, wd=1e-4, callbacks=[best_saver, checkpoint, csver, lr_scheduler])
+# learn.fit_one_cycle(100, 0.3, wd=0.4, callbacks=[best_saver, checkpoint, csver])
 
 
 # data = ImageDataBunch.from_folder(path, valid='test', ds_tfms=(tfms, []), bs=512).normalize(cifar_stats)

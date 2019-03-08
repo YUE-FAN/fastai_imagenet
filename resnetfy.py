@@ -7,8 +7,8 @@ def SpatialAttn_whr(x):
     """Spatial Attention"""
     x_shape = x.size()
     a = x.sum(1, keepdim=True)
-    a = a.view(x_shape[0], -1).to(torch.float16)
-    a = a.to(torch.float16) / a.sum(1, keepdim=True).to(torch.float16)
+    a = a.view(x_shape[0], -1)
+    a = a / a.sum(1, keepdim=True)
     a = a.view(x_shape[0], 1, x_shape[2], x_shape[3])
     return a
 
@@ -203,7 +203,7 @@ class Resnet50(nn.Module):
         x = self.identity_block_2_1(x)
         x = self.identity_block_2_2(x)
         x = self.identity_block_2_3(x)
-        x = x * SpatialAttn_whr(x)
+        # x = x * SpatialAttn_whr(x)
         # print(x.size())
         x = self.bottleneck_3(x)
         x = self.identity_block_3_1(x)
