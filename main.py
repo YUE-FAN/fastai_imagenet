@@ -2,7 +2,7 @@ from fastai.vision import *
 from fastai.vision.models import resnet50
 from resnetfy import Resnet50
 from fastai.distributed import *
-from fastai.callbacks import SaveModelCallback, ReduceLROnPlateauCallback
+from fastai.callbacks import SaveModelCallback, ReduceLROnPlateauCallback, TrackerCallback
 from vggfy import VGG16
 
 from fastai.distributed import *
@@ -13,6 +13,25 @@ parser.add_argument("--local_rank", type=int)
 args = parser.parse_args()
 torch.cuda.set_device(args.local_rank)
 torch.distributed.init_process_group(backend='nccl', init_method='env://')
+
+
+class ReduceLR(TrackerCallback):
+    "A `TrackerCallback` that reduces learning rate when a metric has stopped improving."
+    def __init__(self, learn:Learner, monitor:str='val_loss', mode:str='auto', patience:int=0, factor:float=0.2,
+                 min_delta:int=0):
+        super().__init__(learn, monitor=monitor, mode=mode)
+        self.patience,self.factor,self.min_delta = patience,factor,min_delta
+        if self.operator == np.less:  self.min_delta *= -1
+
+    def on_train_begin(self, **kwargs:Any)->None:
+        "Initialize inner arguments."
+        self.wait, self.opt = 0, self.learn.opt
+        super().on_train_begin(**kwargs)
+
+    def on_epoch_end(self, epoch, **kwargs:Any)->None:
+        if epoch == 30 or epoch == 60:
+            self.opt.lr *= self.factor
+            print(f'Epoch {epoch}: reducing lr to {self.opt.lr}')
 
 
 class my_CSVLogger(LearnerCallback):
@@ -50,8 +69,8 @@ class my_CSVLogger(LearnerCallback):
 print(num_cpus())
 print("sadsadsad")
 # path = untar_data(URLs.CIFAR, dest="./data/")
-path = Path('/fan/datasets/imagenet/')
-ds_tfms = ([*rand_resize_crop(224), flip_lr(p=0.5)], [])
+path = Path('/datasets/imagenet/')
+ds_tfms = ([*rand_resize_crop(224), brightness(change=(0.4,0.6)), contrast(scale=(0.7,1.3)), flip_lr(p=0.5)], [])
 # ds_tfms = None
 # n_gpus = 4
 data = ImageDataBunch.from_folder(path, valid='val', ds_tfms=ds_tfms, bs=256//8, num_workers=8, size=224, resize_method=ResizeMethod.CROP).normalize(imagenet_stats)
@@ -67,7 +86,8 @@ learn.to_fp32()
 
 
 print('start training...')
-lr_scheduler = ReduceLROnPlateauCallback(learn, patience=5, factor=0.1, monitor='accuracy', min_delta=0)
+# lr_scheduler = ReduceLROnPlateauCallback(learn, patience=5, factor=0.1, monitor='accuracy', min_delta=0)
+lr_scheduler = ReduceLR(learn, patience=5, factor=0.1, monitor='accuracy', min_delta=0)
 csver = my_CSVLogger(learn, filename='/logfiles/log')
 best_saver = SaveModelCallback(learn, every='improvement', monitor='accuracy', name='/trained-models/Resnet50_best')
 checkpoint = SaveModelCallback(learn, every='epoch', name='/trained-models/checkpoint')
