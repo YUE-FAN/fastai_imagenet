@@ -35,7 +35,7 @@ parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('--train-batch', default=1024, type=int, metavar='N',
                     help='train batchsize')
-parser.add_argument('--test-batch', default=1024, type=int, metavar='N',
+parser.add_argument('--test-batch', default=256, type=int, metavar='N',
                     help='test batchsize')
 parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
                     metavar='LR', help='initial learning rate')
@@ -209,7 +209,7 @@ def main_worker(gpu, ngpus_per_node, args):
     # for param in model.parameters():
     #     print(param)
     traindir = os.path.join(args.dataset, 'train')
-    valdir = os.path.join(args.dataset, 'val')
+    valdir = os.path.join(args.dataset, 'val_orig')
 
     trainset = datasets.ImageFolder(traindir, transform_train)
     if args.distributed:
@@ -239,14 +239,14 @@ def main_worker(gpu, ngpus_per_node, args):
         start_epoch = checkpoint['epoch']
         model.load_state_dict(checkpoint['state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer'])
-        logger = Logger(os.path.join(args.checkpoint, 'log.txt'), title=title, resume=True)
+        #logger = Logger(os.path.join(args.checkpoint, 'log.txt'), title=title, resume=True)
     else:
         logger = Logger(os.path.join(args.checkpoint, 'log.txt'), title=title)
         logger.set_names(['Learning Rate', 'Train Loss', 'Valid Loss', 'Train Acc.', 'Valid Acc.'])
 
     if args.evaluate:
         print('\nEvaluation only')
-        test_loss, test_acc = test(testloader, model, criterion, start_epoch)
+        test_loss, test_acc = test(testloader, model, criterion, args)
         print(' Test Loss:  %.8f, Test Acc:  %.2f' % (test_loss, test_acc))
         return
 
