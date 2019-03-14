@@ -142,14 +142,14 @@ def main_worker(gpu, ngpus_per_node, args):
     # Data
     print('==> Preparing dataset %s' % args.dataset)
     transform_train = transforms.Compose([
-        transforms.RandomSizedCrop(224),
+        transforms.RandomResizedCrop(224),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
     ])
 
     transform_test = transforms.Compose([
-        transforms.Scale(256),
+        transforms.Resize(256),
         transforms.CenterCrop(224),
         transforms.ToTensor(),
         transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
@@ -209,7 +209,7 @@ def main_worker(gpu, ngpus_per_node, args):
     # for param in model.parameters():
     #     print(param)
     traindir = os.path.join(args.dataset, 'train')
-    valdir = os.path.join(args.dataset, 'val_orig')
+    valdir = os.path.join(args.dataset, 'val')
 
     trainset = datasets.ImageFolder(traindir, transform_train)
     if args.distributed:
