@@ -64,9 +64,9 @@ class bottleneck(nn.Module):
     def __init__(self, inplanes, planes, kernel_size, strides=(2, 2)):
         super(bottleneck, self).__init__()
         plane1, plane2, plane3 = planes
-        self.conv1 = nn.Conv2d(inplanes, plane1, kernel_size=1, stride=strides, padding=0, bias=False)
+        self.conv1 = nn.Conv2d(inplanes, plane1, kernel_size=1, stride=1, padding=0, bias=False)
         self.bn1 = nn.BatchNorm2d(plane1)
-        self.conv2 = nn.Conv2d(plane1, plane2, kernel_size=kernel_size, stride=1, padding=1, bias=False)
+        self.conv2 = nn.Conv2d(plane1, plane2, kernel_size=kernel_size, stride=strides, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(plane2)
         self.conv3 = nn.Conv2d(plane2, plane3, kernel_size=1, stride=1, padding=0, bias=False)
         self.bn3 = nn.BatchNorm2d(plane3)
