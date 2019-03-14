@@ -18,10 +18,12 @@ import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
+from vggfy import VGG16
+from resnetfy import Resnet50
 
-model_names = sorted(name for name in models.__dict__
-    if name.islower() and not name.startswith("__")
-    and callable(models.__dict__[name]))
+#model_names = sorted(name for name in models.__dict__
+#    if name.islower() and not name.startswith("__")
+#    and callable(models.__dict__[name]))
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 parser.add_argument('data', metavar='DIR',
@@ -130,12 +132,13 @@ def main_worker(gpu, ngpus_per_node, args):
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
     # create model
-    if args.pretrained:
-        print("=> using pre-trained model '{}'".format(args.arch))
-        model = models.__dict__[args.arch](pretrained=True)
+    print("==> creating model '{}'".format(args.arch))
+    if args.arch.startswith('resnet50'):
+        model = Resnet50(0, 1000, True, 99)
+    elif args.arch.endswith('vgg16'):
+        model = VGG16(0, 1000, True)
     else:
-        print("=> creating model '{}'".format(args.arch))
-    model = models.__dict__[args.arch]()
+        raise Exception('arch can only be vgg16 or resnet50!')
 
     if args.distributed:
         # For multiprocessing distributed, DistributedDataParallel constructor
@@ -294,15 +297,15 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         batch_time.update(time.time() - end)
         end = time.time()
 
-        if i % args.print_freq == 0:
-            print('Epoch: [{0}][{1}/{2}]\t'
-                  'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                  'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
-                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Acc@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-                  'Acc@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
-                   epoch, i, len(train_loader), batch_time=batch_time,
-                   data_time=data_time, loss=losses, top1=top1, top5=top5))
+        #if i % args.print_freq == 0:
+        #    print('Epoch: [{0}][{1}/{2}]\t'
+        #          'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+        #          'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
+        #          'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+        #          'Acc@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+        #          'Acc@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
+        #           epoch, i, len(train_loader), batch_time=batch_time,
+        #           data_time=data_time, loss=losses, top1=top1, top5=top5))
 
 
 def validate(val_loader, model, criterion, args):
@@ -335,14 +338,14 @@ def validate(val_loader, model, criterion, args):
             batch_time.update(time.time() - end)
             end = time.time()
 
-            if i % args.print_freq == 0:
-                print('Test: [{0}/{1}]\t'
-                      'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                      'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                      'Acc@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-                      'Acc@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
-                       i, len(val_loader), batch_time=batch_time, loss=losses,
-                       top1=top1, top5=top5))
+            #if i % args.print_freq == 0:
+            #    print('Test: [{0}/{1}]\t'
+            #          'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+            #          'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+            #          'Acc@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+            #          'Acc@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
+            #           i, len(val_loader), batch_time=batch_time, loss=losses,
+            #           top1=top1, top5=top5))
 
         print(' * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
               .format(top1=top1, top5=top5))
