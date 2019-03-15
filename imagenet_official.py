@@ -88,13 +88,16 @@ def main():
                       'which can slow down your training considerably! '
                       'You may see unexpected behavior when restarting '
                       'from checkpoints.')
+        raise Exception('rrrrrrrrrrrrrrrrrrrrrrrrr')
 
     if args.gpu is not None:
         warnings.warn('You have chosen a specific GPU. This will completely '
                       'disable data parallelism.')
+        raise Exception('rrrrrrrrrrrrrrrrrrrrrrrrr')
 
     if args.dist_url == "env://" and args.world_size == -1:
         args.world_size = int(os.environ["WORLD_SIZE"])
+        raise Exception('rrrrrrrrrrrrrrrrrrrrrrrrr')
 
     args.distributed = args.world_size > 1 or args.multiprocessing_distributed
 
@@ -107,6 +110,7 @@ def main():
         # main_worker process function
         mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args))
     else:
+        raise Exception('rrrrrrrrrrrrrrrrrrrrrrrrr')
         # Simply call main_worker function
         main_worker(args.gpu, ngpus_per_node, args)
 
@@ -120,6 +124,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
     if args.distributed:
         if args.dist_url == "env://" and args.rank == -1:
+            raise Exception('rrrrrrrrrrrrrrrrrrrrrrrrr')
             args.rank = int(os.environ["RANK"])
         if args.multiprocessing_distributed:
             # For multiprocessing distributed training, rank needs to be the
@@ -150,14 +155,17 @@ def main_worker(gpu, ngpus_per_node, args):
             args.workers = int(args.workers / ngpus_per_node)
             model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
         else:
+            raise Exception('rrrrrrrrrrrrrrrrrrrrrrrrr')
             model.cuda()
             # DistributedDataParallel will divide and allocate batch_size to all
             # available GPUs if device_ids are not set
             model = torch.nn.parallel.DistributedDataParallel(model)
     elif args.gpu is not None:
+        raise Exception('rrrrrrrrrrrrrrrrrrrrrrrrr')
         torch.cuda.set_device(args.gpu)
         model = model.cuda(args.gpu)
     else:
+        raise Exception('rrrrrrrrrrrrrrrrrrrrrrrrr')
         # DataParallel will divide and allocate batch_size to all available GPUs
         if args.arch.startswith('alexnet') or args.arch.startswith('vgg'):
             model.features = torch.nn.DataParallel(model.features)
@@ -174,6 +182,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
     # optionally resume from a checkpoint
     if args.resume:
+        raise Exception('rrrrrrrrrrrrrrrrrrrrrrrrr')
         if os.path.isfile(args.resume):
             print("=> loading checkpoint '{}'".format(args.resume))
             checkpoint = torch.load(args.resume)
@@ -193,7 +202,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
     # Data loading code
     traindir = os.path.join(args.data, 'train')
-    valdir = os.path.join(args.data, 'val_orig')
+    valdir = os.path.join(args.data, 'val')
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
 
@@ -209,6 +218,7 @@ def main_worker(gpu, ngpus_per_node, args):
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
     else:
+        raise Exception('rrrrrrrrrrrrrrrrrrrrrrrrr')
         train_sampler = None
 
     train_loader = torch.utils.data.DataLoader(
@@ -226,6 +236,7 @@ def main_worker(gpu, ngpus_per_node, args):
         num_workers=args.workers, pin_memory=True)
 
     if args.evaluate:
+        raise Exception('rrrrrrrrrrrrrrrrrrrrrrrrr')
         validate(val_loader, model, criterion, args)
         return
 
