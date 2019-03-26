@@ -15,7 +15,7 @@ import torch.optim as optim
 import torch.utils.data as data
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
-from vggfy import VGG16
+from vggfy import VGG16, VGG16_1d
 from resnetfy import Resnet50, Resnet50_1d
 
 from utils import Bar, Logger, AverageMeter, accuracy, mkdir_p, savefig
@@ -148,6 +148,8 @@ def main_worker(gpu, ngpus_per_node, args):
         model = Resnet50(args.drop, num_classes, True, args.layer)
     elif args.arch.endswith('vgg16'):
         model = VGG16(args.drop, num_classes, True)
+    elif args.arch.endswith('vgg16_1d'):
+        model = VGG16_1d(args.drop, num_classes, True, args.layer)
     elif args.arch.startswith('d1_resnet50'):
         model = Resnet50_1d(args.drop, num_classes, True, args.layer)
     else:
