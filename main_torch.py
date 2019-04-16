@@ -182,11 +182,7 @@ def main_worker(gpu, ngpus_per_node, args):
     else:
         warnings.warn('NOT DISTRIBUTED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
         # DataParallel will divide and allocate batch_size to all available GPUs
-        if args.arch.startswith('alexnet') or args.arch.startswith('vgg'):
-            model.features = torch.nn.DataParallel(model.features)
-            model.cuda()
-        else:
-            model = torch.nn.DataParallel(model).cuda()
+        model = torch.nn.DataParallel(model).cuda()
 
     criterion = nn.CrossEntropyLoss().cuda(args.gpu)
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
