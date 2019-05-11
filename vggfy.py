@@ -308,20 +308,12 @@ class VGG16_1d(nn.Module):
             self.conv53 = CONV1D_3x3(512, 512, bias=True)
 
         # self.dropout = nn.Dropout(p=0.5)
-        if layer == 11 or layer == 12:
-            s = 224
-        elif layer == 21 or layer == 22:
-            s = 112
-        elif layer == 31 or layer == 32 or layer == 33:
-            s = 56
-        elif layer == 41 or layer == 42 or layer == 43:
-            s = 28
-        elif layer == 51 or layer == 52 or layer == 53:
-            s = 14
-        elif layer == 99:
-            s = 7
-        self.avgpool = nn.AvgPool2d(s)
-        self.fc = nn.Linear(512, num_classes)
+        self.avgpool = nn.AdaptiveAvgPool2d(1)
+        self.fc = nn.Sequential(nn.Linear(512, 4096),
+                                nn.ReLU(True),
+                                nn.Linear(4096, 4096),
+                                nn.ReLU(True),
+                                nn.Linear(4096, num_classes))
 
         # Initialize the weights
         for m in self.modules():
