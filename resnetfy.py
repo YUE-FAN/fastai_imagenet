@@ -430,7 +430,7 @@ class Resnet50_1d(nn.Module):
             s = 28
         elif layer == 31 or layer == 32 or layer == 33 or layer == 34 or layer == 35 or layer == 40:
             s = 14
-        elif layer == 41 or layer == 42 or later == 99:
+        elif layer == 41 or layer == 42 or layer == 99:
             s = 7
 
         self.avgpool = nn.AvgPool2d(s)  # TODO: check the final size
