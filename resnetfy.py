@@ -430,7 +430,7 @@ class Resnet50_1d(nn.Module):
             s = 28
         elif layer == 31 or layer == 32 or layer == 33 or layer == 34 or layer == 35 or layer == 40:
             s = 14
-        elif layer == 41 or layer == 42:
+        elif layer == 41 or layer == 42 or later == 99:
             s = 7
 
         self.avgpool = nn.AvgPool2d(s)  # TODO: check the final size
@@ -507,6 +507,8 @@ class Resnet50_1d(nn.Module):
             x = self.avgpool(x)
         x = self.identity_block_4_2(x)
         # print("feature shape:", x.size())
+        if self.layer == 99:
+            x = self.avgpool(x)
 
         if self.include_top:
             x = x.view(x.size(0), -1)
