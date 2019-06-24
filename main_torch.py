@@ -16,7 +16,7 @@ import torch.utils.data as data
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from vggfy import VGG16, VGG16_1d
-from resnetfy import Resnet50, Resnet50_1d, Resnet152_1d
+from resnetfy import Resnet50, Resnet50_1d, Resnet152_1d, Resnet50_1x1
 
 from utils import Bar, Logger, AverageMeter, accuracy, mkdir_p, savefig
 
@@ -144,15 +144,17 @@ def main_worker(gpu, ngpus_per_node, args):
 
     # Model
     print("==> creating model '{}'".format(args.arch))
-    if args.arch.startswith('resnet50'):
+    if args.arch.endswith('resnet50'):
         model = Resnet50(args.drop, num_classes, True, args.layer)
     elif args.arch.endswith('vgg16'):
         model = VGG16(args.drop, num_classes, True)
     elif args.arch.endswith('vgg16_1d'):
         model = VGG16_1d(args.drop, num_classes, True, args.layer)
-    elif args.arch.startswith('d1_resnet50'):
+    elif args.arch.endswith('d1_resnet50'):
         model = Resnet50_1d(args.drop, num_classes, True, args.layer)
-    elif args.arch.startswith('d1_resnet152'):
+    elif args.arch.endswith('resnet50_1x1'):
+        model = Resnet50_1x1(args.drop, num_classes, True, args.layer)
+    elif args.arch.endswith('d1_resnet152'):
         model = Resnet152_1d(args.drop, num_classes, True, args.layer)
     else:
         raise Exception('arch can only be vgg16 or resnet50!')
