@@ -923,8 +923,8 @@ class Resnet152_1x1(nn.Module):
         self.num_classes = num_classes
         self.include_top = include_top
         self.layer = layer
-        identity = identity_block_1x1
-        bottle = bottleneck_1x1
+        identity = identity_block1x1
+        bottle = bottleneck1x1
 
         possible_layers = [200, 201, 202, 203, 204, 205, 206, 207] + list(range(300, 336, 1)) + [400, 401, 402, 999]
         if layer not in possible_layers:
