@@ -146,7 +146,7 @@ def main_worker(gpu, ngpus_per_node, args):
     print("==> creating model '{}'".format(args.arch))
     if args.arch.endswith('resnet50'):
         model = Resnet50(args.drop, num_classes, True, args.layer)
-    elif args.arch.endwith('resnet152_1x1'):
+    elif args.arch.endswith('resnet152_1x1'):
         model = Resnet152_1x1(args.drop, num_classes, True, args.layer)
     elif args.arch.endswith('vgg16'):
         model = VGG16(args.drop, num_classes, True)
