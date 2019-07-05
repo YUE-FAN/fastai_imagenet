@@ -928,7 +928,7 @@ class Resnet152_1x1(nn.Module):
 
         possible_layers = [200, 201, 202, 203, 204, 205, 206, 207] + list(range(300, 336, 1)) + [400, 401, 402, 999]
         if layer not in possible_layers:
-            raise Exception('the layer you choose for Resnet152_1d is not supported currently!!!')
+            raise Exception('the layer you choose for Resnet152_1x1 is not supported currently!!!')
         # Define the building blocks
         self.conv_3x3 = conv_1_3x3()
 
@@ -1028,6 +1028,213 @@ class Resnet152_1x1(nn.Module):
         x = self.identity_block_4_1(x)
         x = self.identity_block_4_2(x)
         
+        if self.include_top:
+            x = self.avgpool(x)
+            x = x.view(x.size(0), -1)
+            x = self.fc(x)
+        return x
+
+
+class Resnet152_1x1GAP(nn.Module):
+    def __init__(self, dropout_rate, num_classes, include_top, layer):
+        print('Resnet152_1x1GAP is used')
+        super(Resnet152_1x1GAP, self).__init__()
+        self.dropout_rate = dropout_rate
+        self.num_classes = num_classes
+        self.include_top = include_top
+        self.layer = layer
+        identity = identity_block1x1
+        bottle = bottleneck1x1
+
+        possible_layers = [200, 201, 202, 203, 204, 205, 206, 207] + list(range(300, 336, 1)) + [400, 401, 402, 999]
+        if layer not in possible_layers:
+            raise Exception('the layer you choose for Resnet152_1x1GAP is not supported currently!!!')
+        # Define the building blocks
+        self.conv_3x3 = conv_1_3x3()
+
+        self.bottleneck_1 = bottleneck(16 * 4, [16 * 4, 16 * 4, 64 * 4], kernel_size=3, strides=(1, 1))
+        self.identity_block_1_1 = identity_block3(64 * 4, [16 * 4, 16 * 4, 64 * 4], kernel_size=3)
+        self.identity_block_1_2 = identity_block3(64 * 4, [16 * 4, 16 * 4, 64 * 4], kernel_size=3)
+
+        if layer > 200:
+            self.bottleneck_2 = bottleneck(64 * 4, [32 * 4, 32 * 4, 128 * 4], kernel_size=3, strides=(2, 2))
+        else:
+            self.bottleneck_2 = nn.Sequential(bottle(64 * 4, [32 * 4, 32 * 4, 128 * 4], strides=(2, 2)), nn.AvgPool2d(2, 2))
+        if layer > 201:
+            self.identity_block_2_1 = identity_block3(128 * 4, [32 * 4, 32 * 4, 128 * 4], kernel_size=3)
+        else:
+            self.identity_block_2_1 = identity(128 * 4, [32 * 4, 32 * 4, 128 * 4])
+        if layer > 202:
+            self.identity_block_2_2 = identity_block3(128 * 4, [32 * 4, 32 * 4, 128 * 4], kernel_size=3)
+        else:
+            self.identity_block_2_2 = identity(128 * 4, [32 * 4, 32 * 4, 128 * 4])
+        if layer > 203:
+            self.identity_block_2_3 = identity_block3(128 * 4, [32 * 4, 32 * 4, 128 * 4], kernel_size=3)
+        else:
+            self.identity_block_2_3 = identity(128 * 4, [32 * 4, 32 * 4, 128 * 4])
+        if layer > 204:
+            self.identity_block_2_4 = identity_block3(128 * 4, [32 * 4, 32 * 4, 128 * 4], kernel_size=3)
+        else:
+            self.identity_block_2_4 = identity(128 * 4, [32 * 4, 32 * 4, 128 * 4])
+        if layer > 205:
+            self.identity_block_2_5 = identity_block3(128 * 4, [32 * 4, 32 * 4, 128 * 4], kernel_size=3)
+        else:
+            self.identity_block_2_5 = identity(128 * 4, [32 * 4, 32 * 4, 128 * 4])
+        if layer > 206:
+            self.identity_block_2_6 = identity_block3(128 * 4, [32 * 4, 32 * 4, 128 * 4], kernel_size=3)
+        else:
+            self.identity_block_2_6 = identity(128 * 4, [32 * 4, 32 * 4, 128 * 4])
+        if layer > 207:
+            self.identity_block_2_7 = identity_block3(128 * 4, [32 * 4, 32 * 4, 128 * 4], kernel_size=3)
+        else:
+            self.identity_block_2_7 = identity(128 * 4, [32 * 4, 32 * 4, 128 * 4])
+
+        if layer > 300:
+            self.bottleneck_3 = bottleneck(128 * 4, [64 * 4, 64 * 4, 256 * 4], kernel_size=3, strides=(2, 2))
+        else:
+            self.bottleneck_3 = nn.Sequential(bottle(128 * 4, [64 * 4, 64 * 4, 256 * 4], strides=(2, 2)), nn.AvgPool2d(2, 2))
+
+
+        self.stage3_module = nn.ModuleList()
+        for i in range(301, 336, 1):
+            if layer > i:
+                self.stage3_module.append(identity_block3(256 * 4, [64 * 4, 64 * 4, 256 * 4], kernel_size=3))
+            else:
+                self.stage3_module.append(identity(256 * 4, [64 * 4, 64 * 4, 256 * 4]))
+
+        if layer > 400:
+            self.bottleneck_4 = bottleneck(256 * 4, [128 * 4, 128 * 4, 512 * 4], kernel_size=3, strides=(2, 2))
+        else:
+            self.bottleneck_4 = nn.Sequential(bottle(256 * 4, [128 * 4, 128 * 4, 512 * 4], strides=(2, 2)), nn.AvgPool2d(2, 2))
+
+        if layer > 401:
+            self.identity_block_4_1 = identity_block3(512 * 4, [128 * 4, 128 * 4, 512 * 4], kernel_size=3)
+        else:
+            self.identity_block_4_1 = identity(512 * 4, [128 * 4, 128 * 4, 512 * 4])
+        if layer > 402:
+            self.identity_block_4_2 = identity_block3(512 * 4, [128 * 4, 128 * 4, 512 * 4], kernel_size=3)
+        else:
+            self.identity_block_4_2 = identity(512 * 4, [128 * 4, 128 * 4, 512 * 4])
+
+        self.avgpool = nn.AvgPool2d(7)
+        self.fc = nn.Linear(512 * 4, num_classes)
+
+        # Initialize the weights
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n))
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+            elif isinstance(m, nn.BatchNorm1d):
+                raise Exception('BN1d is used, which you should not do!!!!!!!!!!!')
+
+    def forward(self, x):
+        x = self.conv_3x3(x)
+        x = self.bottleneck_1(x)
+        x = self.identity_block_1_1(x)
+        x = self.identity_block_1_2(x)
+        x = self.bottleneck_2(x)
+        x = self.identity_block_2_1(x)
+        x = self.identity_block_2_2(x)
+        x = self.identity_block_2_3(x)
+        x = self.identity_block_2_4(x)
+        x = self.identity_block_2_5(x)
+        x = self.identity_block_2_6(x)
+        x = self.identity_block_2_7(x)
+        x = self.bottleneck_3(x)
+        for i, m in enumerate(self.stage3_module):
+            x = m(x)
+        x = self.bottleneck_4(x)
+        x = self.identity_block_4_1(x)
+        x = self.identity_block_4_2(x)
+
+        if self.include_top:
+            x = self.avgpool(x)
+            x = x.view(x.size(0), -1)
+            x = self.fc(x)
+        return x
+
+
+class Resnet152_truncated(nn.Module):
+    def __init__(self, dropout_rate, num_classes, include_top, layer):
+        print('Resnet152_truncated is used')
+        super(Resnet152_truncated, self).__init__()
+        self.dropout_rate = dropout_rate
+        self.num_classes = num_classes
+        self.include_top = include_top
+        self.layer = layer
+        self.modulelist = nn.ModuleList()
+
+        possible_layers = [200, 201, 202, 203, 204, 205, 206, 207] + list(range(300, 336, 1)) + [400, 401, 402, 999]
+        if layer not in possible_layers:
+            raise Exception('the layer you choose for Resnet152_1x1GAP is not supported currently!!!')
+        # Define the building blocks
+        self.modulelist.append(conv_1_3x3())
+
+        self.modulelist.append(bottleneck(16 * 4, [16 * 4, 16 * 4, 64 * 4], kernel_size=3, strides=(1, 1)))
+        self.modulelist.append(identity_block3(64 * 4, [16 * 4, 16 * 4, 64 * 4], kernel_size=3))
+        self.modulelist.append(identity_block3(64 * 4, [16 * 4, 16 * 4, 64 * 4], kernel_size=3))
+
+        if layer > 200:
+            self.modulelist.append(bottleneck(64 * 4, [32 * 4, 32 * 4, 128 * 4], kernel_size=3, strides=(2, 2)))
+        if layer > 201:
+            self.modulelist.append(identity_block3(128 * 4, [32 * 4, 32 * 4, 128 * 4], kernel_size=3))
+        if layer > 202:
+            self.modulelist.append(identity_block3(128 * 4, [32 * 4, 32 * 4, 128 * 4], kernel_size=3))
+        if layer > 203:
+            self.modulelist.append(identity_block3(128 * 4, [32 * 4, 32 * 4, 128 * 4], kernel_size=3))
+        if layer > 204:
+            self.modulelist.append(identity_block3(128 * 4, [32 * 4, 32 * 4, 128 * 4], kernel_size=3))
+        if layer > 205:
+            self.modulelist.append(identity_block3(128 * 4, [32 * 4, 32 * 4, 128 * 4], kernel_size=3))
+        if layer > 206:
+            self.modulelist.append(identity_block3(128 * 4, [32 * 4, 32 * 4, 128 * 4], kernel_size=3))
+        if layer > 207:
+            self.modulelist.append(identity_block3(128 * 4, [32 * 4, 32 * 4, 128 * 4], kernel_size=3))
+
+        if layer > 300:
+            self.modulelist.append(bottleneck(128 * 4, [64 * 4, 64 * 4, 256 * 4], kernel_size=3, strides=(2, 2)))
+        for i in range(301, 336, 1):
+            if layer > i:
+                self.modulelist.append(identity_block3(256 * 4, [64 * 4, 64 * 4, 256 * 4], kernel_size=3))
+
+        if layer > 400:
+            self.modulelist.append(bottleneck(256 * 4, [128 * 4, 128 * 4, 512 * 4], kernel_size=3, strides=(2, 2)))
+        if layer > 401:
+            self.modulelist.append(identity_block3(512 * 4, [128 * 4, 128 * 4, 512 * 4], kernel_size=3))
+        if layer > 402:
+            self.modulelist.append(identity_block3(512 * 4, [128 * 4, 128 * 4, 512 * 4], kernel_size=3))
+
+        self.avgpool = nn.AdaptiveAvgPool2d(1)
+        if layer == 200:
+            s = 64 * 4
+        elif layer in [201, 202, 203, 204, 205, 206, 207, 300]:
+            s = 128 * 4
+        elif layer in list(range(300, 336, 1)) + [400]:
+            s = 256 * 4
+        elif layer in [401, 402, 999]:
+            s = 512 * 4
+        self.fc = nn.Linear(s, num_classes)
+        print('the number of layers are ', len(self.modulelist))
+
+        # Initialize the weights
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n))
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+            elif isinstance(m, nn.BatchNorm1d):
+                raise Exception('BN1d is used, which you should not do!!!!!!!!!!!')
+
+    def forward(self, x):
+        for i, module in enumerate(self.modulelist):
+            # print("module %d has input feature shape:" % i, x.size())
+            x = module(x)
+
         if self.include_top:
             x = self.avgpool(x)
             x = x.view(x.size(0), -1)
