@@ -156,9 +156,9 @@ def main_worker(gpu, ngpus_per_node, args):
         model = Resnet50_1d(args.drop, num_classes, True, args.layer)
     elif args.arch.endswith('resnet50_1x1'):
         model = Resnet50_1x1(args.drop, num_classes, True, args.layer)
-    elif args.arch.endswith('resnet50_1x1gap'):
+    elif args.arch.endswith('resnet152_1x1gap'):
         model = Resnet152_1x1GAP(args.drop, num_classes, True, args.layer)
-    elif args.arch.endswith('resnet50_truncated'):
+    elif args.arch.endswith('resnet152_truncated'):
         model = Resnet152_truncated(args.drop, num_classes, True, args.layer)
     elif args.arch.endswith('d1_resnet152'):
         model = Resnet152_1d(args.drop, num_classes, True, args.layer)
@@ -223,7 +223,7 @@ def main_worker(gpu, ngpus_per_node, args):
         transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
     ])
 
-    traindir = '/BS/databases04/ILSVRC2012/training_imgs/'
+    traindir = '/BS/xian/work/data/imageNet1K/train/'
     valdir = '/BS/database11/ILSVRC2012/val/'
 
     trainset = datasets.ImageFolder(traindir, transform_train)
