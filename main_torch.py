@@ -17,7 +17,7 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from vggfy import VGG16, VGG16_1d
 from resnetfy import Resnet50, Resnet50_1d, Resnet152_1d, Resnet50_1x1, Resnet152_1x1, Resnet152_1x1LAP, Resnet152_truncated, Resnet152_1x1LMP
-from resnetfy import Resnet50_1x1LMP, Resnet50_1x1LAP
+from resnetfy import Resnet50_1x1LMP, Resnet50_1x1LAP, Resnet50_truncated
 
 from utils import Bar, Logger, AverageMeter, accuracy, mkdir_p, savefig
 
@@ -159,6 +159,8 @@ def main_worker(gpu, ngpus_per_node, args):
         model = Resnet50_1x1LMP(args.drop, num_classes, True, args.layer)
     elif args.arch.endswith('resnet152_truncated'):
         model = Resnet152_truncated(args.drop, num_classes, True, args.layer)
+    elif args.arch.endswith('resnet50_truncated'):
+        model = Resnet50_truncated(args.drop, num_classes, True, args.layer)
     elif args.arch.endswith('vgg16'):
         model = VGG16(args.drop, num_classes, True)
     elif args.arch.endswith('vgg16_1d'):

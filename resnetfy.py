@@ -963,6 +963,115 @@ class Resnet50_1x1LAP(nn.Module):
         return x
 
 
+class Resnet50_truncated(nn.Module):
+    # TODO: layer can not be 10 or 00!!!!!!!!!!!!!!!
+    def __init__(self, dropout_rate, num_classes, include_top, layer):
+        print('Resnet50_truncated is used')
+        super(Resnet50_truncated, self).__init__()
+        self.dropout_rate = dropout_rate
+        self.num_classes = num_classes
+        self.include_top = include_top
+        self.layer = layer
+        block_ex = 4
+        self.modulelist = nn.ModuleList()
+        possible_layers = [11, 12, 20, 21, 22, 23, 30, 31, 32, 33, 34, 35, 40, 41, 42, 99]
+        if layer not in possible_layers:
+            raise Exception('the layer you choose for Resnet50_truncated is not supported currently!!!')
+
+        # Define the building blocks
+        if layer > 0:
+            self.modulelist.append(conv_1_3x3())
+
+        if layer > 10:
+            self.modulelist.append(
+                bottleneck(16 * block_ex, [16 * block_ex, 16 * block_ex, 64 * block_ex], kernel_size=3, strides=(1, 1)))
+        if layer > 11:
+            self.modulelist.append(
+                identity_block3(64 * block_ex, [16 * block_ex, 16 * block_ex, 64 * block_ex], kernel_size=3))
+        if layer > 12:
+            self.modulelist.append(
+                identity_block3(64 * block_ex, [16 * block_ex, 16 * block_ex, 64 * block_ex], kernel_size=3))
+
+        if layer > 20:
+            self.modulelist.append(
+                bottleneck(64 * block_ex, [32 * block_ex, 32 * block_ex, 128 * block_ex], kernel_size=3,
+                           strides=(2, 2)))
+        if layer > 21:
+            self.modulelist.append(
+                identity_block3(128 * block_ex, [32 * block_ex, 32 * block_ex, 128 * block_ex], kernel_size=3))
+        if layer > 22:
+            self.modulelist.append(
+                identity_block3(128 * block_ex, [32 * block_ex, 32 * block_ex, 128 * block_ex], kernel_size=3))
+        if layer > 23:
+            self.modulelist.append(
+                identity_block3(128 * block_ex, [32 * block_ex, 32 * block_ex, 128 * block_ex], kernel_size=3))
+
+        if layer > 30:
+            self.modulelist.append(
+                bottleneck(128 * block_ex, [64 * block_ex, 64 * block_ex, 256 * block_ex], kernel_size=3,
+                           strides=(2, 2)))
+        if layer > 31:
+            self.modulelist.append(
+                identity_block3(256 * block_ex, [64 * block_ex, 64 * block_ex, 256 * block_ex], kernel_size=3))
+        if layer > 32:
+            self.modulelist.append(
+                identity_block3(256 * block_ex, [64 * block_ex, 64 * block_ex, 256 * block_ex], kernel_size=3))
+        if layer > 33:
+            self.modulelist.append(
+                identity_block3(256 * block_ex, [64 * block_ex, 64 * block_ex, 256 * block_ex], kernel_size=3))
+        if layer > 34:
+            self.modulelist.append(
+                identity_block3(256 * block_ex, [64 * block_ex, 64 * block_ex, 256 * block_ex], kernel_size=3))
+        if layer > 35:
+            self.modulelist.append(
+                identity_block3(256 * block_ex, [64 * block_ex, 64 * block_ex, 256 * block_ex], kernel_size=3))
+
+        if layer > 40:
+            self.modulelist.append(
+                bottleneck(256 * block_ex, [128 * block_ex, 128 * block_ex, 512 * block_ex], kernel_size=3,
+                           strides=(2, 2)))
+        if layer > 41:
+            self.modulelist.append(
+                identity_block3(512 * block_ex, [128 * block_ex, 128 * block_ex, 512 * block_ex], kernel_size=3))
+        if layer > 42:
+            self.modulelist.append(
+                identity_block3(512 * block_ex, [128 * block_ex, 128 * block_ex, 512 * block_ex], kernel_size=3))
+
+        self.avgpool = nn.AdaptiveAvgPool2d(1)
+        if layer in [11, 12, 20]:
+            s = 64 * block_ex
+        elif layer in [21, 22, 23, 30]:
+            s = 128 * block_ex
+        elif layer in [31, 32, 33, 34, 35, 40]:
+            s = 256 * 4
+        elif layer in [41, 42, 99]:
+            s = 512 * 4
+        self.fc = nn.Linear(s, num_classes)
+        print(len(self.modulelist))
+
+        # Initialize the weights
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.BatchNorm1d):
+                raise Exception('BN1d is used, which you should not do!!!!!!!!!!!')
+
+    def forward(self, x):
+
+        for i, module in enumerate(self.modulelist):
+            # print("module %d has input feature shape:" % i, x.size())
+            x = module(x)
+
+        if self.include_top:
+            x = self.avgpool(x)
+            x = x.view(x.size(0), -1)
+            x = self.fc(x)
+        return x
+
+
 class Resnet152_1d(nn.Module):
     def __init__(self, dropout_rate, num_classes, include_top, layer):
         print('Resnet152_1d is used')
