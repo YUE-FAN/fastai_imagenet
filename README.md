@@ -23,4 +23,4 @@ You may create a conda env and run a tmux session. Inside the session, just "bas
 Inside the .sh files, each line trains one independent model. You can divide those lines into several .sh files so that they can be run in parallel. Please remember to specify the --dataset to the location of imagnet dataset and --checkpoint to the location where you would like to store the model (the folder will be create it automatically).
 
 
-![equation]<img src="http://www.sciweavers.org/tex2img.php?eq=%20%5Csqrt%7Bab%7D%20&bc=White&fc=Black&im=jpg&fs=12&ff=arev&edit=0" align="center" border="0" alt=" \sqrt{ab} " width="44" height="26" />
+<img src="http://www.sciweavers.org/tex2img.php?eq=%20%5Csqrt%7Bab%7D%20&bc=White&fc=Black&im=jpg&fs=12&ff=arev&edit=0" align="center" border="0" alt=" \sqrt{ab} " width="44" height="26" />
