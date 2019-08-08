@@ -36,7 +36,7 @@ class CONV_1x1(nn.Module):
         x = self.conv(x)
         x = self.bn(x)
         x = self.relu(x)
-    return x
+        return x
 
 
 class CONV1D_3x3(nn.Module):
