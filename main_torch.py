@@ -15,7 +15,7 @@ import torch.optim as optim
 import torch.utils.data as data
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
-from vggfy import VGG16, VGG16_1d
+from vggfy import VGG16, VGG16_1d, VGG16_1x1LMP, VGG16_1x1LAP
 from resnetfy import Resnet50, Resnet50_1d, Resnet152_1d, Resnet50_1x1, Resnet152_1x1, Resnet152_1x1LAP, Resnet152_truncated, Resnet152_1x1LMP
 from resnetfy import Resnet50_1x1LMP, Resnet50_1x1LAP, Resnet50_truncated
 
@@ -110,7 +110,10 @@ def main():
     if args.multiprocessing_distributed:
         # Since we have ngpus_per_node processes per node, the total world_size
         # needs to be adjusted accordingly
-        args.world_size = ngpus_per_node * args.world_size
+        args.world_size = ngpus_per_node * args.welif args.arch.endswith('vgg16_1x1lmp'):
+        model = VGG16_1x1LMP(args.drop, num_classes, True, args.layer)
+    elif args.arch.endswith('vgg16_1x1lap'):
+model = VGG16_1x1LAP(args.drop, num_classes, True, args.layer)orld_size
         # Use torch.multiprocessing.spawn to launch distributed processes: the
         # main_worker process function
         mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args))
@@ -165,6 +168,10 @@ def main_worker(gpu, ngpus_per_node, args):
         model = VGG16(args.drop, num_classes, True)
     elif args.arch.endswith('vgg16_1d'):
         model = VGG16_1d(args.drop, num_classes, True, args.layer)
+    elif args.arch.endswith('vgg16_1x1lmp'):
+        model = VGG16_1x1LMP(args.drop, num_classes, True, args.layer)
+    elif args.arch.endswith('vgg16_1x1lap'):
+        model = VGG16_1x1LAP(args.drop, num_classes, True, args.layer)
     elif args.arch.endswith('d1_resnet50'):
         model = Resnet50_1d(args.drop, num_classes, True, args.layer)
     elif args.arch.endswith('resnet50_1x1'):
