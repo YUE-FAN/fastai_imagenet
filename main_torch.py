@@ -110,10 +110,7 @@ def main():
     if args.multiprocessing_distributed:
         # Since we have ngpus_per_node processes per node, the total world_size
         # needs to be adjusted accordingly
-        args.world_size = ngpus_per_node * args.welif args.arch.endswith('vgg16_1x1lmp'):
-        model = VGG16_1x1LMP(args.drop, num_classes, True, args.layer)
-    elif args.arch.endswith('vgg16_1x1lap'):
-model = VGG16_1x1LAP(args.drop, num_classes, True, args.layer)orld_size
+        args.world_size = ngpus_per_node * args.world_size
         # Use torch.multiprocessing.spawn to launch distributed processes: the
         # main_worker process function
         mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args))
