@@ -520,7 +520,7 @@ class VGG16_1x1LMP(nn.Module):
                 nn.init.constant_(m.bias, 0)
                 # raise Exception('You are using a model without BN!!!')
 
-    def forward(x):
+    def forward(self, x):
         x = self.conv11(x)
         x = self.conv12(x)
 
