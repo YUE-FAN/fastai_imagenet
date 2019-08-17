@@ -15,9 +15,6 @@ import torch.optim as optim
 import torch.utils.data as data
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
-from vggfy import VGG16, VGG16_1d, VGG16_1x1LMP, VGG16_1x1LAP
-from resnetfy import Resnet50, Resnet50_1d, Resnet152_1d, Resnet50_1x1, Resnet152_1x1, Resnet152_1x1LAP, Resnet152_truncated, Resnet152_1x1LMP
-from resnetfy import Resnet50_1x1LMP, Resnet50_1x1LAP, Resnet50_truncated
 from mobilenetv2 import MobileNetV2_1x1LMP, MobileNetV2_1x1LAP
 from mobilenet import MobileNetV1_1x1LMP, MobileNetV1_1x1LAP
 
@@ -36,20 +33,15 @@ parser.add_argument('--epochs', default=300, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--train-batch', default=1024, type=int, metavar='N',
+parser.add_argument('--train-batch', default=256, type=int, metavar='N',
                     help='train batchsize')
 parser.add_argument('--test-batch', default=256, type=int, metavar='N',
                     help='test batchsize')
-parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.05, type=float,
                     metavar='LR', help='initial learning rate')
-parser.add_argument('--drop', '--dropout', default=0, type=float,
-                    metavar='Dropout', help='Dropout ratio')
-parser.add_argument('--schedule', type=int, nargs='+', default=[150, 225],
-                        help='Decrease learning rate at these epochs.')
-parser.add_argument('--gamma', type=float, default=0.1, help='LR is multiplied by gamma on schedule.')
 parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                     help='momentum')
-parser.add_argument('--weight-decay', '--wd', default=1e-4, type=float,
+parser.add_argument('--weight-decay', '--wd', default=0.00004, type=float,
                     metavar='W', help='weight decay (default: 1e-4)')
 # Checkpoints
 parser.add_argument('-c', '--checkpoint', default='checkpoint', type=str, metavar='PATH',
@@ -58,7 +50,6 @@ parser.add_argument('--resume', default='', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 # Architecture
 parser.add_argument('--arch', '-a', metavar='ARCH', default='resnet20', help='model architecture: ')
-
 parser.add_argument('--layer', type=int)
 
 # Miscs
@@ -91,6 +82,7 @@ args = parser.parse_args()
 state = {k: v for k, v in args._get_kwargs()}
 
 best_acc = 0  # best test accuracy
+
 
 def main():
     global args
@@ -130,6 +122,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
     args.gpu = gpu
 
+
     if args.gpu is not None:
         print("Use GPU: {} for training".format(args.gpu))
 
@@ -147,37 +140,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
     # Model
     print("==> creating model '{}'".format(args.arch))
-    if args.arch.endswith('resnet50'):
-        model = Resnet50(args.drop, num_classes, True, args.layer)
-    elif args.arch.endswith('resnet152_1x1'):
-        model = Resnet152_1x1(args.drop, num_classes, True, args.layer)
-    elif args.arch.endswith('resnet152_1x1lap'):
-        model = Resnet152_1x1LAP(args.drop, num_classes, True, args.layer)
-    elif args.arch.endswith('resnet152_1x1lmp'):
-        model = Resnet152_1x1LMP(args.drop, num_classes, True, args.layer)
-    elif args.arch.endswith('resnet50_1x1lap'):
-        model = Resnet50_1x1LAP(args.drop, num_classes, True, args.layer)
-    elif args.arch.endswith('resnet50_1x1lmp'):
-        model = Resnet50_1x1LMP(args.drop, num_classes, True, args.layer)
-    elif args.arch.endswith('resnet152_truncated'):
-        model = Resnet152_truncated(args.drop, num_classes, True, args.layer)
-    elif args.arch.endswith('resnet50_truncated'):
-        model = Resnet50_truncated(args.drop, num_classes, True, args.layer)
-    elif args.arch.endswith('vgg16'):
-        model = VGG16(args.drop, num_classes, True)
-    elif args.arch.endswith('vgg16_1d'):
-        model = VGG16_1d(args.drop, num_classes, True, args.layer)
-    elif args.arch.endswith('vgg16_1x1lmp'):
-        model = VGG16_1x1LMP(args.drop, num_classes, True, args.layer)
-    elif args.arch.endswith('vgg16_1x1lap'):
-        model = VGG16_1x1LAP(args.drop, num_classes, True, args.layer)
-    elif args.arch.endswith('d1_resnet50'):
-        model = Resnet50_1d(args.drop, num_classes, True, args.layer)
-    elif args.arch.endswith('resnet50_1x1'):
-        model = Resnet50_1x1(args.drop, num_classes, True, args.layer)
-    elif args.arch.endswith('d1_resnet152'):
-        model = Resnet152_1d(args.drop, num_classes, True, args.layer)
-    elif args.arch.endswith('mobilenetv1_1x1lmp'):
+    if args.arch.endswith('mobilenetv1_1x1lmp'):
         model = MobileNetV1_1x1LMP(1-0.999, num_classes, True, args.layer)
     elif args.arch.endswith('mobilenetv1_1x1lap'):
         model = MobileNetV1_1x1LAP(1-0.999, num_classes, True, args.layer)
@@ -216,6 +179,14 @@ def main_worker(gpu, ngpus_per_node, args):
         warnings.warn('NOT DISTRIBUTED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
         # DataParallel will divide and allocate batch_size to all available GPUs
         model = torch.nn.DataParallel(model).cuda()
+
+    # Allocate GPU memory
+    mem = os.popen('"nvidia-smi" --query-gpu=memory.total,memory.used --format=csv,nounits,noheader').read().split('\n')
+    total = mem[0].split(',')[0]
+    total = int(total)
+    max_mem = int(total * 0.8)
+    x = torch.rand((256, 1024, max_mem)).cuda(args.gpu)
+    del x
 
     criterion = nn.CrossEntropyLoss().cuda(args.gpu)
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
@@ -262,11 +233,11 @@ def main_worker(gpu, ngpus_per_node, args):
         train_sampler = None
     trainloader = data.DataLoader(trainset, batch_size=args.train_batch, shuffle=(train_sampler is None),
                                   num_workers=args.workers, pin_memory=True, sampler=train_sampler)
-
+    print('--------------------------------------')
+    print('the len of the trainloader should be 5005, which is ', len(trainloader))
     testset = datasets.ImageFolder(valdir, transform_test)
     testloader = data.DataLoader(testset, batch_size=args.test_batch, shuffle=False, num_workers=args.workers,
                                  pin_memory=True)
-
 
     # Resume
     title = 'imagenet-' + args.arch
@@ -281,6 +252,8 @@ def main_worker(gpu, ngpus_per_node, args):
         model.load_state_dict(checkpoint['state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer'])
         logger = Logger(os.path.join(args.checkpoint, 'log.txt'), title=title, resume=True)
+        for param_group in optimizer.param_groups:
+            state['lr'] = param_group['lr']
     else:
         logger = Logger(os.path.join(args.checkpoint, 'log.txt'), title=title)
         logger.set_names(['Learning Rate', 'Train Loss', 'Valid Loss', 'Train Acc.', 'Valid Acc.'])
@@ -295,7 +268,6 @@ def main_worker(gpu, ngpus_per_node, args):
     for epoch in range(start_epoch, args.epochs):
         if args.distributed:
             train_sampler.set_epoch(epoch)
-        adjust_learning_rate(optimizer, epoch)
 
         print('\nEpoch: [%d | %d] LR: %f' % (epoch + 1, args.epochs, state['lr']))
 
@@ -339,8 +311,7 @@ def train(trainloader, model, criterion, optimizer, epoch, args):
 
     # bar = Bar('Processing', max=len(trainloader))
     for batch_idx, (inputs, targets) in enumerate(trainloader):
-        # print(type(inputs), type(targets))
-        # print(inputs.size(), len(targets))
+        adjust_learning_rate(optimizer, epoch, batch_idx, len(trainloader))
         # measure data loading time
         data_time.update(time.time() - end)
 
@@ -463,13 +434,16 @@ def save_checkpoint(state, is_best, checkpoint='checkpoint', filename='checkpoin
         shutil.copyfile(filepath, os.path.join(checkpoint, 'model_best.pth.tar'))
 
 
-def adjust_learning_rate(optimizer, epoch):
-    # TODO: try to understand this part
+from math import cos, pi
+def adjust_learning_rate(optimizer, epoch, iteration, num_iter):
     global state
-    if epoch in args.schedule:
-        state['lr'] *= args.gamma
-        for param_group in optimizer.param_groups:
-            param_group['lr'] = state['lr']
+
+    # state['lr'] = optimizer.param_groups[0]['lr']
+    current_iter = iteration + epoch * num_iter
+    max_iter = args.epochs * num_iter
+    state['lr'] = args.lr * (1 + cos(pi * current_iter / max_iter)) / 2
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = state['lr']
 
 
 if __name__ == '__main__':
