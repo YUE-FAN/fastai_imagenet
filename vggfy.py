@@ -22,12 +22,12 @@ class CONV_3x3(nn.Module):
         x = self.relu(x)
         return x
 
-class CONV_1x1(nn.Module):
+class CONV1D_1x1(nn.Module):
     """
     This is just a wraper for a CONV_1x1
     """
     def __init__(self, inplanes, outplanes, bias):
-        super(CONV_1x1, self).__init__()
+        super(CONV1D_1x1, self).__init__()
         self.conv = nn.Conv2d(inplanes, outplanes, kernel_size=1, stride=1, padding=0, bias=bias)
         self.bn = nn.BatchNorm2d(outplanes)
         self.relu = nn.ReLU(inplace=True)
@@ -654,7 +654,7 @@ class VGG16_1x1LAP(nn.Module):
                 nn.init.constant_(m.bias, 0)
                 # raise Exception('You are using a model without BN!!!')
 
-    def forward(x):
+    def forward(self, x):
         x = self.conv11(x)
         x = self.conv12(x)
 
