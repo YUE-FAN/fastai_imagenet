@@ -18,6 +18,8 @@ import torchvision.datasets as datasets
 from vggfy import VGG16, VGG16_1d, VGG16_1x1LMP, VGG16_1x1LAP
 from resnetfy import Resnet50, Resnet50_1d, Resnet152_1d, Resnet50_1x1, Resnet152_1x1, Resnet152_1x1LAP, Resnet152_truncated, Resnet152_1x1LMP
 from resnetfy import Resnet50_1x1LMP, Resnet50_1x1LAP, Resnet50_truncated
+from mobilenetv2 import MobileNetV2_1x1LMP, MobileNetV2_1x1LAP
+from mobilenet import MobileNetV1_1x1LMP, MobileNetV1_1x1LAP
 
 from utils import Bar, Logger, AverageMeter, accuracy, mkdir_p, savefig
 
@@ -175,6 +177,14 @@ def main_worker(gpu, ngpus_per_node, args):
         model = Resnet50_1x1(args.drop, num_classes, True, args.layer)
     elif args.arch.endswith('d1_resnet152'):
         model = Resnet152_1d(args.drop, num_classes, True, args.layer)
+    elif args.arch.endswith('mobilenetv1_1x1lmp'):
+        model = MobileNetV1_1x1LMP(1-0.999, num_classes, True, args.layer)
+    elif args.arch.endswith('mobilenetv1_1x1lap'):
+        model = MobileNetV1_1x1LAP(1-0.999, num_classes, True, args.layer)
+    elif args.arch.endswith('mobilenetv2_1x1lmp'):
+        model = MobileNetV2_1x1LMP(num_classes, args.layer)
+    elif args.arch.endswith('mobilenetv2_1x1lap'):
+        model = MobileNetV2_1x1LAP(num_classes, args.layer)
     else:
         raise Exception('arch can only be vgg16 or resnet50!')
 
@@ -237,8 +247,13 @@ def main_worker(gpu, ngpus_per_node, args):
         transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
     ])
 
-    traindir = os.path.join(args.dataset, 'train')
-    valdir = os.path.join(args.dataset, 'val')
+    if args.dataset == 'xian':
+        print('ImageNet from Xian is used!')
+        traindir = '/BS/xian/work/data/imageNet1K/train/'
+        valdir = '/BS/database11/ILSVRC2012/val/'
+    else:
+        traindir = os.path.join(args.dataset, 'train')
+        valdir = os.path.join(args.dataset, 'val')
 
     trainset = datasets.ImageFolder(traindir, transform_train)
     if args.distributed:
