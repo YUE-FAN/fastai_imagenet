@@ -184,7 +184,7 @@ def main_worker(gpu, ngpus_per_node, args):
     mem = os.popen('"nvidia-smi" --query-gpu=memory.total,memory.used --format=csv,nounits,noheader').read().split('\n')
     total = mem[0].split(',')[0]
     total = int(total)
-    max_mem = int(total * 0.8)
+    max_mem = int(total * 0.7)
     x = torch.rand((256, 1024, max_mem)).cuda(args.gpu)
     del x
 
