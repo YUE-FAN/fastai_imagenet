@@ -123,6 +123,14 @@ def main():
 
 def main_worker(gpu, ngpus_per_node, args):
     global best_acc
+    
+    mem = os.popen('"nvidia-smi" --query-gpu=memory.total,memory.used --format=csv,nounits,noheader').read().split('\n')
+    total = mem[0].split(',')[0]
+    total = int(total)
+    max_mem = int(total*0.9)
+    x = torch.rand((256, 1024, max_mem)).cuda()
+    del x
+    
     start_epoch = args.start_epoch  # start from epoch 0 or last checkpoint epoch
 
     if not os.path.isdir(args.checkpoint):
