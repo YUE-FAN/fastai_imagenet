@@ -128,8 +128,8 @@ def main_worker(gpu, ngpus_per_node, args):
     total = mem[0].split(',')[0]
     total = int(total)
     max_mem = int(total*0.5)
-    x = torch.rand((256, 1024, max_mem)).cuda()
-    del x
+    # x = torch.rand((256, 1024, max_mem)).cuda()
+    # del x
     
     start_epoch = args.start_epoch  # start from epoch 0 or last checkpoint epoch
 
