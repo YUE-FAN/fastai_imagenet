@@ -28,7 +28,7 @@ parser.add_argument('-d', '--dataset', default='path to dataset', type=str)
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
 # Optimization options
-parser.add_argument('--epochs', default=600, type=int, metavar='N',
+parser.add_argument('--epochs', default=300, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
@@ -431,11 +431,27 @@ def save_checkpoint(state, is_best, checkpoint='checkpoint', filename='checkpoin
         shutil.copyfile(filepath, os.path.join(checkpoint, 'model_best.pth.tar'))
 
 
+# def adjust_learning_rate(optimizer, epoch, iteration, num_iter):
+#     global state
+#     current_iter = iteration + epoch * num_iter
+#     max_iter = 3 * 10 ** 5
+#     state['lr'] = args.lr - args.lr * current_iter / max_iter
+#     for param_group in optimizer.param_groups:
+#         param_group['lr'] = state['lr']
+# from math import cos, pi
+# def adjust_learning_rate(optimizer, epoch, iteration, num_iter):
+#     global state
+#     current_iter = iteration + epoch * num_iter
+#     max_iter = 3 * 10 ** 5
+#     state['lr'] = args.lr * (1 + cos(pi * current_iter / max_iter)) / 2
+#     for param_group in optimizer.param_groups:
+#         param_group['lr'] = state['lr']
+from math import cos, pi
 def adjust_learning_rate(optimizer, epoch, iteration, num_iter):
     global state
     current_iter = iteration + epoch * num_iter
-    max_iter = 3 * 10 ** 5
-    state['lr'] = args.lr - args.lr * current_iter / max_iter
+    max_iter = args.epochs * num_iter
+    state['lr'] = args.lr * (1 + cos(pi * current_iter / max_iter)) / 2
     for param_group in optimizer.param_groups:
         param_group['lr'] = state['lr']
 
