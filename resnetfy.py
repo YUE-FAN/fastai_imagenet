@@ -89,7 +89,7 @@ class identity_block3(nn.Module):
         self.bn3 = nn.BatchNorm2d(plane3)
         self.relu = nn.ReLU(inplace=True)
 
-    def forward(self, input_tensor):
+    def forward(self, input_tensor, return_conv3_out=False):  # return_conv3_out is only served for grad_cam.py
         out = self.conv1(input_tensor)
         out = self.bn1(out)
         out = self.relu(out)
@@ -98,12 +98,16 @@ class identity_block3(nn.Module):
         out = self.bn2(out)
         out = self.relu(out)
 
-        out = self.conv3(out)
-        out = self.bn3(out)
+        out_conv3 = self.conv3(out)
+        out = self.bn3(out_conv3)
 
         out += input_tensor
         out = self.relu(out)
-        return out
+        if return_conv3_out:
+            return out, out_conv3
+        else:
+            return out
+
 
 
 class bottleneck_1D(nn.Module):
@@ -218,7 +222,7 @@ class identity_block1x1(nn.Module):
         self.bn3 = nn.BatchNorm2d(plane3)
         self.relu = nn.ReLU(inplace=True)
 
-    def forward(self, input_tensor):
+    def forward(self, input_tensor, return_conv3_out=False):  # return_conv3_out is only served for grad_cam.py
         out = self.conv1(input_tensor)
         out = self.bn1(out)
         out = self.relu(out)
@@ -227,12 +231,15 @@ class identity_block1x1(nn.Module):
         out = self.bn2(out)
         out = self.relu(out)
 
-        out = self.conv3(out)
-        out = self.bn3(out)
+        out_conv3 = self.conv3(out)
+        out = self.bn3(out_conv3)
 
         out += input_tensor
         out = self.relu(out)
-        return out
+        if return_conv3_out:
+            return out, out_conv3
+        else:
+            return out
 
 
 class bottleneck_dconv():
