@@ -79,7 +79,7 @@ class GradCam:
 
         self.model.zero_grad()
         self.model.zero_grad()
-        one_hot.backward(retain_graph=True)
+        one_hot.backward(torch.ones_like(one_hot), retain_graph=True)
 
         # grads_val = self.extractor.get_gradients()[-1].cpu().data.numpy()  # [bs, c, h, w]
         grads_val = self.extractor.get_gradients()[-1].detach().data  # [bs, c, h, w]
@@ -91,7 +91,7 @@ class GradCam:
 
         cams = weights * targets  # [bs, c, h, w]
         cams = cams.sum(dim=1).cpu().numpy()  # [bs, h, w]
-
+        cams = np.maximum(cams, 0)
         return logits, cams
 
 
@@ -136,7 +136,6 @@ def draw_imagenetgrad_cam(model, img_paths, class_idxs, target_layer_names, use_
     # draw CAMs on images
     grad_camed_imgs = []
     for i, cam in enumerate(cams):
-        cam = np.maximum(cam, 0)
         cam = cv2.resize(cam, (224, 224))
         cam = cam - np.min(cam)
         cam = cam / np.max(cam)
