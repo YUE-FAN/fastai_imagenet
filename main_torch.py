@@ -17,7 +17,7 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from vggfy import VGG16, VGG16_1d, VGG16_1x1LMP, VGG16_1x1LAP
 from resnetfy import Resnet50, Resnet50_1d, Resnet152_1d, Resnet50_1x1, Resnet152_1x1, Resnet152_1x1LAP, Resnet152_truncated, Resnet152_1x1LMP
-from resnetfy import Resnet50_1x1LMP, Resnet50_1x1LAP, Resnet50_truncated
+from resnetfy import Resnet50_1x1LMP, Resnet50_1x1LAP, Resnet50_truncated, Resnet50_Shuffle
 from mobilenetv2 import MobileNetV2_1x1LMP, MobileNetV2_1x1LAP
 from mobilenet import MobileNetV1_1x1LMP, MobileNetV1_1x1LAP
 
@@ -157,6 +157,8 @@ def main_worker(gpu, ngpus_per_node, args):
     print("==> creating model '{}'".format(args.arch))
     if args.arch.endswith('resnet50'):
         model = Resnet50(args.drop, num_classes, True, args.layer)
+    elif args.arch.endswith('resnet50_shuffle'):
+        model = Resnet50_Shuffle(args.drop, num_classes, True, args.layer)
     elif args.arch.endswith('resnet152_1x1'):
         model = Resnet152_1x1(args.drop, num_classes, True, args.layer)
     elif args.arch.endswith('resnet152_1x1lap'):
