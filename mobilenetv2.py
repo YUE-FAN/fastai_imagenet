@@ -89,12 +89,12 @@ class InvertedResidual1x1(nn.Module):
                 nn.BatchNorm2d(hidden_dim),
                 nn.ReLU6(inplace=True),
                 # dw
-                nn.Conv2d(hidden_dim, hidden_dim, 1, stride, 0, groups=hidden_dim, bias=False),
-                nn.BatchNorm2d(hidden_dim),
-                nn.ReLU6(inplace=True),
-                # pw-linear
-                nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
+                nn.Conv2d(hidden_dim, oup, 1, stride, 0, bias=False),
                 nn.BatchNorm2d(oup),
+                # nn.ReLU6(inplace=True),
+                # pw-linear
+                # nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
+                # nn.BatchNorm2d(oup),
             )
 
     def forward(self, x):
