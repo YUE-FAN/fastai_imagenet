@@ -478,70 +478,70 @@ class Resnet50_Shuffle(nn.Module):
         if layer != 10:
             self.bottleneck_1 = bottleneck(16*4, [16*4, 16*4, 64*4], kernel_size=3, strides=(1, 1))
         else:
-            self.bottleneck_1 = bottleneck_shuffle(16, [16, 16, 64], kernel_size=3, strides=(1, 1), type=type)
+            self.bottleneck_1 = bottleneck_shuffle(16*4, [16*4, 16*4, 64*4], kernel_size=3, strides=(1, 1), type=type)
         if layer != 11:
             self.identity_block_1_1 = identity_block3(64*4, [16*4, 16*4, 64*4], kernel_size=3)
         else:
-            self.identity_block_1_1 = identity_block3_shuffle(64, [16, 16, 64], kernel_size=3, type=type)
+            self.identity_block_1_1 = identity_block3_shuffle(64*4, [16*4, 16*4, 64*4], kernel_size=3, type=type)
         if layer != 12:
             self.identity_block_1_2 = identity_block3(64*4, [16*4, 16*4, 64*4], kernel_size=3)
         else:
-            self.identity_block_1_2 = identity_block3_shuffle(64, [16, 16, 64], kernel_size=3, type=type)
+            self.identity_block_1_2 = identity_block3_shuffle(64*4, [16*4, 16*4, 64*4], kernel_size=3, type=type)
 
         if layer != 20:
             self.bottleneck_2 = bottleneck(64*4, [32*4, 32*4, 128*4], kernel_size=3, strides=(2, 2))
         else:
-            self.bottleneck_2 = bottleneck_shuffle(64, [32, 32, 128], kernel_size=3, strides=(2, 2), type=type)
+            self.bottleneck_2 = bottleneck_shuffle(64*4, [32*4, 32*4, 128*4], kernel_size=3, strides=(2, 2), type=type)
         if layer != 21:
             self.identity_block_2_1 = identity_block3(128*4, [32*4, 32*4, 128*4], kernel_size=3)
         else:
-            self.identity_block_2_1 = identity_block3_shuffle(128, [32, 32, 128], kernel_size=3, type=type)
+            self.identity_block_2_1 = identity_block3_shuffle(128*4, [32*4, 32*4, 128*4], kernel_size=3, type=type)
         if layer != 22:
             self.identity_block_2_2 = identity_block3(128*4, [32*4, 32*4, 128*4], kernel_size=3)
         else:
-            self.identity_block_2_2 = identity_block3_shuffle(128, [32, 32, 128], kernel_size=3, type=type)
+            self.identity_block_2_2 = identity_block3_shuffle(128*4, [32*4, 32*4, 128*4], kernel_size=3, type=type)
         if layer != 23:
             self.identity_block_2_3 = identity_block3(128*4, [32*4, 32*4, 128*4], kernel_size=3)
         else:
-            self.identity_block_2_3 = identity_block3_shuffle(128, [32, 32, 128], kernel_size=3, type=type)
+            self.identity_block_2_3 = identity_block3_shuffle(128*4, [32*4, 32*4, 128*4], kernel_size=3, type=type)
 
         if layer != 30:
             self.bottleneck_3 = bottleneck(128*4, [64*4, 64*4, 256*4], kernel_size=3, strides=(2, 2))
         else:
-            self.bottleneck_3 = bottleneck_shuffle(128, [64, 64, 256], kernel_size=3, strides=(2, 2), type=type)
+            self.bottleneck_3 = bottleneck_shuffle(128*4, [64*4, 64*4, 256*4], kernel_size=3, strides=(2, 2), type=type)
         if layer != 31:
             self.identity_block_3_1 = identity_block3(256*4, [64*4, 64*4, 256*4], kernel_size=3)
         else:
-            self.identity_block_3_1 = identity_block3_shuffle(256, [64, 64, 256], kernel_size=3, type=type)
+            self.identity_block_3_1 = identity_block3_shuffle(256*4, [64*4, 64*4, 256*4], kernel_size=3, type=type)
         if layer != 32:
             self.identity_block_3_2 = identity_block3(256*4, [64*4, 64*4, 256*4], kernel_size=3)
         else:
-            self.identity_block_3_2 = identity_block3_shuffle(256, [64, 64, 256], kernel_size=3, type=type)
+            self.identity_block_3_2 = identity_block3_shuffle(256*4, [64*4, 64*4, 256*4], kernel_size=3, type=type)
         if layer != 33:
             self.identity_block_3_3 = identity_block3(256*4, [64*4, 64*4, 256*4], kernel_size=3)
         else:
-            self.identity_block_3_3 = identity_block3_shuffle(256, [64, 64, 256], kernel_size=3, type=type)
+            self.identity_block_3_3 = identity_block3_shuffle(256*4, [64*4, 64*4, 256*4], kernel_size=3, type=type)
         if layer != 34:
             self.identity_block_3_4 = identity_block3(256*4, [64*4, 64*4, 256*4], kernel_size=3)
         else:
-            self.identity_block_3_4 = identity_block3_shuffle(256, [64, 64, 256], kernel_size=3, type=type)
+            self.identity_block_3_4 = identity_block3_shuffle(256*4, [64*4, 64*4, 256*4], kernel_size=3, type=type)
         if layer != 35:
             self.identity_block_3_5 = identity_block3(256*4, [64*4, 64*4, 256*4], kernel_size=3)
         else:
-            self.identity_block_3_5 = identity_block3_shuffle(256, [64, 64, 256], kernel_size=3, type=type)
+            self.identity_block_3_5 = identity_block3_shuffle(256*4, [64*4, 64*4, 256*4], kernel_size=3, type=type)
 
         if layer != 40:
             self.bottleneck_4 = bottleneck(256*4, [128*4, 128*4, 512*4], kernel_size=3, strides=(2, 2))
         else:
-            self.bottleneck_4 = bottleneck_shuffle(256, [128, 128, 512], kernel_size=3, strides=(2, 2), type=type)
+            self.bottleneck_4 = bottleneck_shuffle(256*4, [128*4, 128*4, 512*4], kernel_size=3, strides=(2, 2), type=type)
         if layer != 41:
             self.identity_block_4_1 = identity_block3(512*4, [128*4, 128*4, 512*4], kernel_size=3)
         else:
-            self.identity_block_4_1 = identity_block3_shuffle(512, [128, 128, 512], kernel_size=3, type=type)
+            self.identity_block_4_1 = identity_block3_shuffle(512*4, [128*4, 128*4, 512*4], kernel_size=3, type=type)
         if layer != 42:
             self.identity_block_4_2 = identity_block3(512*4, [128*4, 128*4, 512*4], kernel_size=3)
         else:
-            self.identity_block_4_2 = identity_block3_shuffle(512, [128, 128, 512], kernel_size=3, type=type)
+            self.identity_block_4_2 = identity_block3_shuffle(512*4, [128*4, 128*4, 512*4], kernel_size=3, type=type)
 
         self.avgpool = nn.AvgPool2d(7)
         self.fc = nn.Linear(512*4, num_classes)
