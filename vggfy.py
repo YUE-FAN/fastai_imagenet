@@ -1,8 +1,8 @@
 import torch.nn as nn
 import torch
 import numpy as np
-# from .dconv import DConv1Dai_share, DConv1Dai, Dconv_cos, Dconv_euc, Dconv_rand, Dconv_drop, Dconv_shuffle, Dconv_shuffleall, Dconv_none, Dconv_horizontal, Dconv_vertical
-# from .dconv import Dconv_cshuffle, Dconv_crand
+from utils.dconv import Dconv_cos, Dconv_euc, Dconv_rand, Dconv_drop, Dconv_shuffle, Dconv_shuffleall, Dconv_none
+from utils.dconv import Dconv_cshuffle, Dconv_crand, Dconv_localshuffle
 
 
 class CONV_3x3(nn.Module):
@@ -55,6 +55,24 @@ class CONV1D_3x3(nn.Module):
         x = self.bn(x)
         x = self.relu(x)
         return x
+
+
+class CONV_3x3shuffle(nn.Module):
+    """
+    This is just a wraper for a CONV_3x3shuffle
+    """
+    def __init__(self, inplanes, outplanes, kernelsize, stride, padding):
+        super(CONV_3x3shuffle, self).__init__()
+        self.dconv = Dconv_shuffle(inplanes, outplanes, kernelsize, stride, padding)
+        self.bn = nn.BatchNorm2d(outplanes)
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self, x):
+        x = self.dconv(x)
+        x = self.bn(x)
+        x = self.relu(x)
+        return x
+
 
 def SpatialAttn_whr(x):
     """Spatial Attention"""
@@ -160,7 +178,6 @@ class VGG19(nn.Module):  # TODO: try different config of the channels
 
 class VGG16(nn.Module):  # TODO: try different config of the channels
     def __init__(self, dropout_rate, num_classes, include_top):
-
         super(VGG16, self).__init__()
         print("CIFAR VGG16 is used")
         self.dropout_rate = dropout_rate
@@ -238,6 +255,137 @@ class VGG16(nn.Module):  # TODO: try different config of the channels
             # np.save('/nethome/yuefan/fanyue/dconv/fcweight.npy', self.fc.weight.detach().cpu().numpy())
         return self.fc(x)
 
+class VGG16_Shuffle(nn.Module):
+    def __init__(self, dropout_rate, num_classes, include_top, layer):
+        """
+        only one layer will be shuffled here
+        """
+        super(VGG16_Shuffle, self).__init__()
+        print("CIFAR VGG16_Shuffle is used")
+        self.dropout_rate = dropout_rate
+        self.num_classes = num_classes
+        self.include_top = include_top
+        self.layer = layer
+
+        # Define the building blocks
+        if layer == 11:
+            self.conv11 = CONV_3x3shuffle(3, 64, kernelsize=3, stride=1, padding=1)
+        else:
+            self.conv11 = CONV_3x3(3, 64, kernelsize=3, stride=1, padding=1, bias=False)
+
+        if layer == 12:
+            self.conv12 = nn.Sequential(CONV_3x3shuffle(64, 64, kernelsize=3, stride=1, padding=1),
+                                        nn.MaxPool2d(kernel_size=2, stride=2))
+        else:
+            self.conv12 = nn.Sequential(CONV_3x3(64, 64, kernelsize=3, stride=1, padding=1, bias=False),
+                                        nn.MaxPool2d(kernel_size=2, stride=2))
+            # self.conv12 = CONV_3x3(64, 64, kernelsize=3, stride=2, padding=1, bias=False)
+
+        if layer == 21:
+            self.conv21 = CONV_3x3shuffle(64, 128, kernelsize=3, stride=1, padding=1)
+        else:
+            self.conv21 = CONV_3x3(64, 128, kernelsize=3, stride=1, padding=1, bias=False)
+
+        if layer == 22:
+            self.conv22 = nn.Sequential(CONV_3x3shuffle(128, 128, kernelsize=3, stride=1, padding=1),
+                                        nn.MaxPool2d(kernel_size=2, stride=2))
+        else:
+            self.conv22 = nn.Sequential(CONV_3x3(128, 128, kernelsize=3, stride=1, padding=1, bias=False),
+                                        nn.MaxPool2d(kernel_size=2, stride=2))
+            # self.conv22 = CONV_3x3(128, 128, kernelsize=3, stride=2, padding=1, bias=False)
+
+        if layer == 31:
+            self.conv31 = CONV_3x3shuffle(128, 256, kernelsize=3, stride=1, padding=1)
+        else:
+            self.conv31 = CONV_3x3(128, 256, kernelsize=3, stride=1, padding=1, bias=False)
+
+        if layer == 32:
+            self.conv32 = CONV_3x3shuffle(256, 256, kernelsize=3, stride=1, padding=1)
+        else:
+            self.conv32 = CONV_3x3(256, 256, kernelsize=3, stride=1, padding=1, bias=False)
+
+        if layer == 33:
+            self.conv33 = nn.Sequential(CONV_3x3shuffle(256, 256, kernelsize=3, stride=1, padding=1),
+                                        nn.MaxPool2d(kernel_size=2, stride=2))
+        else:
+            self.conv33 = nn.Sequential(CONV_3x3(256, 256, kernelsize=3, stride=1, padding=1, bias=False),
+                                        nn.MaxPool2d(kernel_size=2, stride=2))
+            # self.conv33 = CONV_3x3(256, 256, kernelsize=3, stride=2, padding=1, bias=False)
+
+        if layer == 41:
+            self.conv41 = CONV_3x3shuffle(256, 512, kernelsize=3, stride=1, padding=1)
+        else:
+            self.conv41 = CONV_3x3(256, 512, kernelsize=3, stride=1, padding=1, bias=False)
+
+        if layer == 42:
+            self.conv42 = CONV_3x3shuffle(512, 512, kernelsize=3, stride=1, padding=1)
+        else:
+            self.conv42 = CONV_3x3(512, 512, kernelsize=3, stride=1, padding=1, bias=False)
+
+        if layer == 43:
+            self.conv43 = nn.Sequential(CONV_3x3shuffle(512, 512, kernelsize=3, stride=1, padding=1),
+                                        nn.MaxPool2d(kernel_size=2, stride=2))
+        else:
+            self.conv43 = nn.Sequential(CONV_3x3(512, 512, kernelsize=3, stride=1, padding=1, bias=False),
+                                        nn.MaxPool2d(kernel_size=2, stride=2))
+            # self.conv43 = CONV_3x3(512, 512, kernelsize=3, stride=2, padding=1, bias=False)
+
+        if layer == 51:
+            self.conv51 = CONV_3x3shuffle(512, 512, kernelsize=3, stride=1, padding=1)
+        else:
+            self.conv51 = CONV_3x3(512, 512, kernelsize=3, stride=1, padding=1, bias=False)
+
+        if layer == 52:
+            self.conv52 = CONV_3x3shuffle(512, 512, kernelsize=3, stride=1, padding=1)
+        else:
+            self.conv52 = CONV_3x3(512, 512, kernelsize=3, stride=1, padding=1, bias=False)
+
+        if layer == 53:
+            self.conv53 = nn.Sequential(CONV_3x3shuffle(512, 512, kernelsize=3, stride=1, padding=1),
+                                        nn.MaxPool2d(kernel_size=2, stride=2))
+        else:
+            self.conv53 = nn.Sequential(CONV_3x3(512, 512, kernelsize=3, stride=1, padding=1, bias=False),
+                                        nn.MaxPool2d(kernel_size=2, stride=2))
+
+        self.avgpool = nn.AdaptiveAvgPool2d(1)
+        self.fc = nn.Sequential(nn.Linear(512, 4096),
+                                nn.ReLU(True),
+                                nn.Linear(4096, 4096),
+                                nn.ReLU(True),
+                                nn.Linear(4096, num_classes))
+
+        # Initialize the weights
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+            elif isinstance(m, nn.BatchNorm2d):
+                # raise Exception('You are using a model without BN!!!')
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+
+    def forward(self, input_x):
+        x = self.conv11(input_x)
+        x = self.conv12(x)
+
+        x = self.conv21(x)
+        x = self.conv22(x)
+
+        x = self.conv31(x)
+        x = self.conv32(x)
+        x = self.conv33(x)
+
+        x = self.conv41(x)
+        x = self.conv42(x)
+        x = self.conv43(x)
+
+        x = self.conv51(x)
+        x = self.conv52(x)
+        x = self.conv53(x)
+
+        if self.include_top:
+            x = self.avgpool(x)
+            x = x.view(x.size(0), -1)
+        return self.fc(x)
 
 class VGG16_1d(nn.Module):
     def __init__(self, dropout_rate, num_classes, include_top, layer, type='none'):

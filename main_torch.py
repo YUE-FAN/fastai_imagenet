@@ -15,9 +15,9 @@ import torch.optim as optim
 import torch.utils.data as data
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
-from vggfy import VGG16, VGG16_1d, VGG16_1x1LMP, VGG16_1x1LAP
+from vggfy import VGG16_Shuffle, VGG16_1d, VGG16_1x1LMP, VGG16_1x1LAP
 from resnetfy import Resnet50, Resnet50_1d, Resnet152_1d, Resnet50_1x1, Resnet152_1x1, Resnet152_1x1LAP, Resnet152_truncated, Resnet152_1x1LMP
-from resnetfy import Resnet50_1x1LMP, Resnet50_1x1LAP, Resnet50_truncated, Resnet50_Shuffle
+from resnetfy import Resnet50_1x1LMP, Resnet50_1x1LAP, Resnet50_truncated, Resnet50_Shuffle, Resnet152_Shuffle
 from mobilenetv2 import MobileNetV2_1x1LMP, MobileNetV2_1x1LAP
 from mobilenet import MobileNetV1_1x1LMP, MobileNetV1_1x1LAP
 
@@ -169,12 +169,14 @@ def main_worker(gpu, ngpus_per_node, args):
         model = Resnet50_1x1LAP(args.drop, num_classes, True, args.layer)
     elif args.arch.endswith('resnet50_1x1lmp'):
         model = Resnet50_1x1LMP(args.drop, num_classes, True, args.layer)
+    elif args.arch.endswith('resnet152_shuffle'):
+        model = Resnet152_Shuffle(args.drop, num_classes, True, args.layer)
     elif args.arch.endswith('resnet152_truncated'):
         model = Resnet152_truncated(args.drop, num_classes, True, args.layer)
     elif args.arch.endswith('resnet50_truncated'):
         model = Resnet50_truncated(args.drop, num_classes, True, args.layer)
-    elif args.arch.endswith('vgg16'):
-        model = VGG16(args.drop, num_classes, True)
+    elif args.arch.endswith('vgg16_shuffle'):
+        model = VGG16_Shuffle(args.drop, num_classes, True, args.layer)
     elif args.arch.endswith('vgg16_1d'):
         model = VGG16_1d(args.drop, num_classes, True, args.layer)
     elif args.arch.endswith('vgg16_1x1lmp'):
