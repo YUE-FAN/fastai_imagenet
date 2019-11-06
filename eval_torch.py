@@ -8,6 +8,7 @@ import argparse
 import os
 import time
 import random
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -66,16 +67,50 @@ if use_cuda:
 best_acc = 0  # best test accuracy
 
 
-# # TODO: remember to get rid of it
-# class Rotation(object):
-#     def __init__(self, degrees, resample=3, expand=False, center=None):
-#         self.degrees = degrees
-#         self.resample = resample
-#         self.expand = expand
-#         self.center = center
-#
-#     def __call__(self, img):
-#         return F.rotate(img, self.degrees, self.resample, self.expand, self.center)# TODO: remember to get rid of it
+class Rotation(object):
+    def __init__(self, degrees, resample=3, expand=False, center=None):
+        self.degrees = degrees
+        self.resample = resample
+        self.expand = expand
+        self.center = center
+
+    def __call__(self, img):
+        return F.rotate(img, self.degrees, self.resample, self.expand, self.center)
+
+
+class Translation(object):
+    def __init__(self, translate, resample=3, fillcolor=0):
+        assert isinstance(translate, (tuple, list)) and len(translate) == 2, \
+            "translate should be a list or tuple and it must be of length 2."
+        for t in translate:
+            if not (-1.0 <= t <= 1.0):
+                raise ValueError("translation values should be between 0 and 1")
+        self.translate = translate
+        self.resample = resample
+        self.fillcolor = fillcolor
+
+    def __call__(self, img):
+        img_size = img.size
+        max_dx = self.translate[0] * img_size[0]
+        translate = (np.round(-max_dx), 0)
+        return F.affine(img, 0.0, translate, 1.0, 0.0, resample=self.resample, fillcolor=self.fillcolor)
+
+
+class Center_block(object):
+    def __init__(self, block_ratio, block_color=[0, 0, 0]):
+        if not (0.0 <= block_ratio <= 1.0):
+            raise ValueError("block ratio should be between 0 and 1")
+        self.block_ratio = block_ratio
+        self.block_color = block_color
+
+    def __call__(self, img):
+        img_size = np.array([img.size(1), img.size(2)])
+        block_size = np.round(self.block_ratio * img_size).astype(np.int)
+        loc = np.round(img_size / 2 - block_size / 2).astype(np.int)  # upper left corner
+        img[0, loc[0]:loc[0] + block_size[0], loc[1]:loc[1] + block_size[1]] = self.block_color[0]
+        img[1, loc[0]:loc[0] + block_size[0], loc[1]:loc[1] + block_size[1]] = self.block_color[1]
+        img[2, loc[0]:loc[0] + block_size[0], loc[1]:loc[1] + block_size[1]] = self.block_color[2]
+        return img
 
 
 def main():
@@ -142,8 +177,12 @@ def main():
     transform_test = transforms.Compose([
         transforms.Resize(256),
         transforms.CenterCrop(224),
-        # Rotation(180),  # TODO: remember to get rid of it
+        # TODO: remember to get rid of it
+        # Rotation(-30),
+        # Translation((-60./224., 0)),
+
         transforms.ToTensor(),
+        # Center_block(0.5),
         transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
         # transforms.Normalize((124/255, 116/255, 104/255), (0.229, 0.224, 0.225)), # TODO: for meanvalue_background val
     ])
