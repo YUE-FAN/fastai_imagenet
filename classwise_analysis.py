@@ -1265,9 +1265,18 @@ def create_dataloader(dataset_type, dataset_path):
     return num_classes, testloader, id2label
 
 
-def draw_save_table(acc_diff, layer_list, sort_index, id2label, save_path):
+def draw_save_table(perclass_accs, acc_diff, layer_list, sort_index, id2label, save_path):
     fig, axs = plt.subplots(1, 1)
-    clust_data = acc_diff[:, sort_index]
+    acc_diff = acc_diff[:, sort_index]
+    perclass_accs = perclass_accs[:, sort_index]
+
+    clust_data = []
+    for i in range(len(layer_list)):
+        row = []
+        for j in range(acc_diff.shape[1]):
+            row.append(str(perclass_accs[i,j])+'%  '+str(acc_diff[i,j])+'%')
+        clust_data.append(row)
+
     collabel = [id2label[i] for i in sort_index]
     rowLabels = layer_list
     axs.axis('tight')
@@ -1279,20 +1288,21 @@ def draw_save_table(acc_diff, layer_list, sort_index, id2label, save_path):
     plt.savefig(save_path)
 
 
-def generate_save_table(acc_diff, layer_list, id2label, num_showed_classes=10, save_path='./'):
+def generate_save_table(perclass_accs, acc_diff, layer_list, id2label, num_showed_classes=10, save_path='./'):
     acc_diff = np.array(acc_diff)  # shape [13, 100]
+    perclass_accs = np.array(perclass_accs)  # shape [13, 100]
 
     sort_index = np.argsort(np.std(acc_diff, axis=0))
     sort_index = sort_index[0:num_showed_classes]
-    draw_save_table(acc_diff, layer_list, sort_index, id2label, save_path+'lowest_std.pdf')
+    draw_save_table(perclass_accs, acc_diff, layer_list, sort_index, id2label, save_path+'lowest_std.pdf')
 
     sort_index = np.argsort(np.std(acc_diff, axis=0))
     sort_index = sort_index[-num_showed_classes:]
-    draw_save_table(acc_diff, layer_list, sort_index, id2label, save_path+'largest_std.pdf')
+    draw_save_table(perclass_accs, acc_diff, layer_list, sort_index, id2label, save_path+'largest_std.pdf')
 
     sort_index = np.argsort(np.abs(np.mean(acc_diff, axis=0)))
     sort_index = sort_index[-num_showed_classes:]
-    draw_save_table(acc_diff, layer_list, sort_index, id2label, save_path+'largest_mean.pdf')
+    draw_save_table(perclass_accs, acc_diff, layer_list, sort_index, id2label, save_path+'largest_mean.pdf')
 
 
 def main():
@@ -1329,6 +1339,7 @@ def main():
     print('ref acc is', reftest_acc)
 
     acc_diff = []
+    perclass_accs = []
     for layer in layer_list:
         model = create_model(args.arch, num_classes, layer)
         model = torch.nn.DataParallel(model).cuda()
@@ -1343,8 +1354,12 @@ def main():
         print('Test Acc:  %.2f' % test_acc)
         # print(perclass_acc - refperclass_acc)
         acc_diff.append(perclass_acc - refperclass_acc)
+        perclass_accs.append(perclass_acc)
 
-    generate_save_table(acc_diff, layer_list, id2label, num_showed_classes=10, save_path='./')
+    acc_diff.append(refperclass_acc - refperclass_acc)
+    perclass_accs.append(refperclass_acc)
+    layer_list.append(99)
+    generate_save_table(perclass_accs, acc_diff, layer_list, id2label, num_showed_classes=10, save_path='./')
 
     return
 
