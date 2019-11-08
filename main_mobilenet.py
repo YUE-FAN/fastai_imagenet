@@ -15,7 +15,7 @@ import torch.optim as optim
 import torch.utils.data as data
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
-from mobilenetv2 import MobileNetV2_1x1LMP, MobileNetV2_1x1LAP
+from mobilenetv2 import MobileNetV2_1x1LMP, MobileNetV2_1x1LAP, MobileNetV2_Shuffle, MobileNetV2_1d
 from mobilenet import MobileNetV1_1x1LMP, MobileNetV1_1x1LAP
 
 from utils import Bar, Logger, AverageMeter, accuracy, mkdir_p, savefig
@@ -148,6 +148,10 @@ def main_worker(gpu, ngpus_per_node, args):
         model = MobileNetV2_1x1LMP(num_classes, args.layer)
     elif args.arch.endswith('mobilenetv2_1x1lap'):
         model = MobileNetV2_1x1LAP(num_classes, args.layer)
+    elif args.arch.endswith('mobilenetv2_1d'):
+        model = MobileNetV2_1d(num_classes, args.layer)
+    elif args.arch.endswith('mobilenetv2_shuffle'):
+        model = MobileNetV2_Shuffle(num_classes, args.layer)
     else:
         raise Exception('arch can only be vgg16 or resnet50!')
 

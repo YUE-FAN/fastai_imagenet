@@ -1,5 +1,6 @@
 import torch.nn as nn
 import math
+from utils.dconv import Dconv_shuffle_depthwise
 # import torch
 # import numpy as np
 # from .dconv import DConv1Dai_share, DConv1Dai, Dconv_cos, Dconv_euc, Dconv_rand, Dconv_drop, Dconv_shuffle, Dconv_shuffleall, Dconv_none, Dconv_horizontal, Dconv_vertical
@@ -63,6 +64,47 @@ class InvertedResidual(nn.Module):
             return self.conv(x)
 
 
+class InvertedResidual_shuffle(nn.Module):
+    def __init__(self, inp, oup, stride, expand_ratio):
+        super(InvertedResidual_shuffle, self).__init__()
+        self.stride = stride
+        assert stride in [1, 2]
+
+        hidden_dim = round(inp * expand_ratio)
+        self.use_res_connect = self.stride == 1 and inp == oup
+
+        if expand_ratio == 1:
+            self.conv = nn.Sequential(
+                # dw
+                Dconv_shuffle_depthwise(hidden_dim, hidden_dim, 3, stride, 1),
+                nn.BatchNorm2d(hidden_dim),
+                nn.ReLU6(inplace=True),
+                # pw-linear
+                nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
+                nn.BatchNorm2d(oup),
+            )
+        else:
+            self.conv = nn.Sequential(
+                # pw
+                nn.Conv2d(inp, hidden_dim, 1, 1, 0, bias=False),
+                nn.BatchNorm2d(hidden_dim),
+                nn.ReLU6(inplace=True),
+                # dw
+                Dconv_shuffle_depthwise(hidden_dim, hidden_dim, 3, stride, 1),
+                nn.BatchNorm2d(hidden_dim),
+                nn.ReLU6(inplace=True),
+                # pw-linear
+                nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
+                nn.BatchNorm2d(oup),
+            )
+
+    def forward(self, x):
+        if self.use_res_connect:
+            return x + self.conv(x)
+        else:
+            return self.conv(x)
+
+
 class InvertedResidual1x1(nn.Module):
     def __init__(self, inp, oup, stride, expand_ratio):
         super(InvertedResidual1x1, self).__init__()
@@ -89,12 +131,12 @@ class InvertedResidual1x1(nn.Module):
                 nn.BatchNorm2d(hidden_dim),
                 nn.ReLU6(inplace=True),
                 # dw
-                nn.Conv2d(hidden_dim, oup, 1, stride, 0, bias=False),
-                nn.BatchNorm2d(oup),
-                # nn.ReLU6(inplace=True),
+                nn.Conv2d(hidden_dim, hidden_dim, 1, stride, 0, groups=hidden_dim, bias=False),
+                nn.BatchNorm2d(hidden_dim),
+                nn.ReLU6(inplace=True),
                 # pw-linear
-                # nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
-                # nn.BatchNorm2d(oup),
+                nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
+                nn.BatchNorm2d(oup),
             )
 
     def forward(self, x):
@@ -515,6 +557,248 @@ class MobileNetV2_1x1LAP(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
             elif isinstance(m, nn.Linear):
+                m.weight.data.normal_(0, 0.01)
+                m.bias.data.zero_()
+
+
+class MobileNetV2_1d(nn.Module):
+    def __init__(self, num_classes, layer):
+        super(MobileNetV2_1d, self).__init__()
+        print("MobileNetV2_1d is used")
+        block = InvertedResidual
+        block1x1 = InvertedResidual1x1
+
+        assert layer in [10, 20, 21, 30, 31, 32, 40, 41, 42, 43, 50, 51, 52, 60, 61, 62, 70, 99]
+        layers = [conv_3x3_bn(3, 32, 2)]
+
+        if layer > 10:
+            layers.append(block(32, 16, 1, 1))
+        else:
+            layers.append(block1x1(32, 16, 1, 1))
+
+        if layer > 20:
+            layers.append(block(16, 24, 2, 6))
+        else:
+            layers.append(block1x1(16, 24, 1, 6))
+        if layer > 21:
+            layers.append(block(24, 24, 1, 6))
+        else:
+            layers.append(block1x1(24, 24, 1, 6))
+
+        if layer > 30:
+            layers.append(block(24, 32, 2, 6))
+        else:
+            layers.append(block1x1(24, 32, 1, 6))
+        if layer > 31:
+            layers.append(block(32, 32, 1, 6))
+        else:
+            layers.append(block1x1(32, 32, 1, 6))
+        if layer > 32:
+            layers.append(block(32, 32, 1, 6))
+        else:
+            layers.append(block1x1(32, 32, 1, 6))
+
+        if layer > 40:
+            layers.append(block(32, 64, 2, 6))
+        else:
+            layers.append(block1x1(32, 64, 1, 6))
+        if layer > 41:
+            layers.append(block(64, 64, 1, 6))
+        else:
+            layers.append(block1x1(64, 64, 1, 6))
+        if layer > 42:
+            layers.append(block(64, 64, 1, 6))
+        else:
+            layers.append(block1x1(64, 64, 1, 6))
+        if layer > 43:
+            layers.append(block(64, 64, 1, 6))
+        else:
+            layers.append(block1x1(64, 64, 1, 6))
+
+        if layer > 50:
+            layers.append(block(64, 96, 1, 6))
+        else:
+            layers.append(block1x1(64, 96, 1, 6))
+        if layer > 51:
+            layers.append(block(96, 96, 1, 6))
+        else:
+            layers.append(block1x1(96, 96, 1, 6))
+        if layer > 52:
+            layers.append(block(96, 96, 1, 6))
+        else:
+            layers.append(block1x1(96, 96, 1, 6))
+
+        if layer > 60:
+            layers.append(block(96, 160, 2, 6))
+        else:
+            layers.append(block1x1(96, 160, 1, 6))
+        if layer > 61:
+            layers.append(block(160, 160, 1, 6))
+        else:
+            layers.append(block1x1(160, 160, 1, 6))
+        if layer > 62:
+            layers.append(block(160, 160, 1, 6))
+        else:
+            layers.append(block1x1(160, 160, 1, 6))
+
+        if layer > 70:
+            layers.append(block(160, 320, 1, 6))
+        else:
+            layers.append(block1x1(160, 320, 1, 6))
+
+        # self.features = nn.Sequential(*layers)
+        self.layers = layers
+        self.layer = layer
+
+        self.conv = conv_1x1_bn(320, 1280)
+        # self.avgpool = nn.AvgPool2d(7, stride=1)
+        self.avgpool = nn.AdaptiveAvgPool2d(1)
+        self.classifier = nn.Linear(1280, num_classes)
+
+        self._initialize_weights()
+
+    def forward(self, x):
+        # x = self.features(x)
+        for layer, id in zip(self.layers, [0, 10, 20, 21, 30, 31, 32, 40, 41, 42, 43, 50, 51, 52, 60, 61, 62, 70]):
+            if self.layer == id:
+                x = self.avgpool(x)
+            x = layer(x)
+        x = self.conv(x)
+        if self.layer == 99:
+            x = self.avgpool(x)
+        x = x.view(x.size(0), -1)
+        x = self.classifier(x)
+        return x
+
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n))
+                if m.bias is not None:
+                    m.bias.data.zero_()
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+            elif isinstance(m, nn.Linear):
+                n = m.weight.size(1)
+                m.weight.data.normal_(0, 0.01)
+                m.bias.data.zero_()
+
+
+class MobileNetV2_Shuffle(nn.Module):
+    def __init__(self, num_classes, layer):
+        super(MobileNetV2_Shuffle, self).__init__()
+        print("MobileNetV2_Shuffle is used")
+        block = InvertedResidual
+        block1x1 = InvertedResidual_shuffle
+
+        assert layer in [10, 20, 21, 30, 31, 32, 40, 41, 42, 43, 50, 51, 52, 60, 61, 62, 70, 99]
+        layers = [conv_3x3_bn(3, 32, 2)]
+
+        if layer != 10:
+            layers.append(block(32, 16, 1, 1))
+        else:
+            layers.append(block1x1(32, 16, 1, 1))
+
+        if layer != 20:
+            layers.append(block(16, 24, 2, 6))
+        else:
+            layers.append(block1x1(16, 24, 2, 6))
+        if layer != 21:
+            layers.append(block(24, 24, 1, 6))
+        else:
+            layers.append(block1x1(24, 24, 1, 6))
+
+        if layer != 30:
+            layers.append(block(24, 32, 2, 6))
+        else:
+            layers.append(block1x1(24, 32, 2, 6))
+        if layer != 31:
+            layers.append(block(32, 32, 1, 6))
+        else:
+            layers.append(block1x1(32, 32, 1, 6))
+        if layer != 32:
+            layers.append(block(32, 32, 1, 6))
+        else:
+            layers.append(block1x1(32, 32, 1, 6))
+
+        if layer != 40:
+            layers.append(block(32, 64, 2, 6))
+        else:
+            layers.append(block1x1(32, 64, 2, 6))
+        if layer != 41:
+            layers.append(block(64, 64, 1, 6))
+        else:
+            layers.append(block1x1(64, 64, 1, 6))
+        if layer != 42:
+            layers.append(block(64, 64, 1, 6))
+        else:
+            layers.append(block1x1(64, 64, 1, 6))
+        if layer != 43:
+            layers.append(block(64, 64, 1, 6))
+        else:
+            layers.append(block1x1(64, 64, 1, 6))
+
+        if layer != 50:
+            layers.append(block(64, 96, 1, 6))
+        else:
+            layers.append(block1x1(64, 96, 1, 6))
+        if layer != 51:
+            layers.append(block(96, 96, 1, 6))
+        else:
+            layers.append(block1x1(96, 96, 1, 6))
+        if layer != 52:
+            layers.append(block(96, 96, 1, 6))
+        else:
+            layers.append(block1x1(96, 96, 1, 6))
+
+        if layer != 60:
+            layers.append(block(96, 160, 2, 6))
+        else:
+            layers.append(block1x1(96, 160, 2, 6))
+        if layer != 61:
+            layers.append(block(160, 160, 1, 6))
+        else:
+            layers.append(block1x1(160, 160, 1, 6))
+        if layer != 62:
+            layers.append(block(160, 160, 1, 6))
+        else:
+            layers.append(block1x1(160, 160, 1, 6))
+
+        if layer != 70:
+            layers.append(block(160, 320, 1, 6))
+        else:
+            layers.append(block1x1(160, 320, 1, 6))
+
+        self.features = nn.Sequential(*layers)
+
+        self.conv = conv_1x1_bn(320, 1280)
+        self.avgpool = nn.AvgPool2d(7, stride=1)
+        self.classifier = nn.Linear(1280, num_classes)
+
+        self._initialize_weights()
+
+    def forward(self, x):
+        x = self.features(x)
+        x = self.conv(x)
+        x = self.avgpool(x)
+        x = x.view(x.size(0), -1)
+        x = self.classifier(x)
+        return x
+
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n))
+                if m.bias is not None:
+                    m.bias.data.zero_()
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+            elif isinstance(m, nn.Linear):
+                n = m.weight.size(1)
                 m.weight.data.normal_(0, 0.01)
                 m.bias.data.zero_()
 
