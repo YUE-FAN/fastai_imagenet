@@ -329,6 +329,59 @@ class Dconv_shuffle(nn.Module):
         return self.dilated_conv(x)
 
 
+class Dconv_shuffle_depthwise(nn.Module):
+    """
+    Deformable convolution with random shuffling of the feature map.
+    Random shuffling only happened within each page independently.
+    The sampling locations are generated for each forward pass during the training.
+    """
+
+    def __init__(self, inplane, outplane, kernel_size, stride, padding):
+        super(Dconv_shuffle_depthwise, self).__init__()
+        print('cifar Dconv_shuffle_depthwise is used')
+        self.dilated_conv = nn.Conv2d(inplane, outplane, kernel_size=kernel_size, stride=stride, padding=padding,
+                                      groups=inplane, bias=False)
+        self.indices = None
+
+    def _setup(self, inplane, spatial_size):
+        self.indices = np.empty((inplane, spatial_size), dtype=np.int64)
+        for i in range(inplane):
+            self.indices[i, :] = np.arange(self.indices.shape[1]) + i * self.indices.shape[1]
+
+    def forward(self, x):
+        # x_shape = x.size()  # [128, 3, 32, 32]
+        # x = x.view(x_shape[0] * x_shape[1] * x_shape[2] * x_shape[3], )  # [128, 3*32*32]
+        # x_offset = torch.empty(x_shape[0], x_shape[1], x_shape[2], x_shape[3]).cuda(cuda_number)
+        # # np.save('/nethome/yuefan/fanyue/dconv/x.npy', x.detach().cpu().numpy())
+        # permth = torch.empty((x_shape[0] * x_shape[1] * x_shape[2] * x_shape[3], )).float()
+        # for ii in range(x_shape[0]):
+        #     perm = torch.empty((x_shape[1] * x_shape[2] * x_shape[3], )).float()
+        #     for i in range(x_shape[1]):
+        #         a = torch.randperm(x_shape[2] * x_shape[3]) + i * x_shape[2] * x_shape[3]
+        #         perm[i * x_shape[2] * x_shape[3]:(i+1) * x_shape[2] * x_shape[3]] = a
+        #     permth[ii * x_shape[1] * x_shape[2] * x_shape[3]:(ii+1) * x_shape[1] * x_shape[2] * x_shape[3]] = perm + ii * x_shape[1] * x_shape[2] * x_shape[3]
+        # x_offset[:, :, :, :] = x[permth.long()].view(x_shape[0], x_shape[1], x_shape[2], x_shape[3])
+        #
+        # return self.dilated_conv(x_offset)
+        # x_shape = x.size()  # [128, 3, 32, 32]
+        # x = x.view(x_shape[0], x_shape[1] * x_shape[2] * x_shape[3])  # [128, 3*32*32]
+        # x_offset = torch.empty(x_shape[0], x_shape[1], x_shape[2], x_shape[3]).cuda(cuda_number)
+        # perm = torch.empty(0).float()
+        # for i in range(x_shape[1]):
+        #     a = torch.randperm(x_shape[2] * x_shape[3]) + i * x_shape[2] * x_shape[3]
+        #     perm = torch.cat((perm, a.float()), 0)
+        # x_offset[:, :, :, :] = x[:, perm.long()].view(x_shape[0], x_shape[1], x_shape[2], x_shape[3])
+        # return self.dilated_conv(x_offset)
+        x_shape = x.size()  # [128, 3, 32, 32]
+        x = x.view(x_shape[0], -1)
+        if self.indices is None:
+            self._setup(x_shape[1], x_shape[2] * x_shape[3])
+        for i in range(x_shape[1]):
+            np.random.shuffle(self.indices[i])
+        x = x[:, torch.from_numpy(self.indices)].view(x_shape)
+        return self.dilated_conv(x)
+
+
 class Dconv_localshuffle(nn.Module):
     """
     Deformable convolution with random shuffling of the feature map.
