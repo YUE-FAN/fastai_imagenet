@@ -21,3 +21,16 @@ torch 1.0.0 and corresponding torchvision
 You may create a conda env and run a tmux session. Inside the session, just "bash vgg161d.sh" or "bash d1_resnet50.sh"
 
 Inside the .sh files, each line trains one independent model. You can divide those lines into several .sh files so that they can be run in parallel. Please remember to specify the --dataset to the location of imagnet dataset and --checkpoint to the location where you would like to store the model (the folder will be create it automatically).
+
+## To Dingfan:
+Requirement:
+Python 3.6.7
+numpy 1.16.3
+scipy 1.3.0
+Pillow 6.0.0
+torch 1.0.0 and corresponding torchvision
+
+Train ResNet50:
+
+CUDA_VISIBLE_DEVICES=0,1,2 python main_torch.py -a resnet50_1x1lap --layer 99 --dataset xxx  --epochs 90 --schedule 30 60 --train-batch 256 --checkpoint xxx --multiprocessing-distributed --ngpus_per_node 3 --workers 16
+
