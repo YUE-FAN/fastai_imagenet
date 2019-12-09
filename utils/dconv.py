@@ -236,11 +236,11 @@ class Dconv_rand(nn.Module):
     The sampling locations are generated for each forward pass during the training.
     """
 
-    def __init__(self, inplane, outplane, kernel_size, stride, padding):
+    def __init__(self, inplane, outplane, kernel_size, stride, padding, bias):
         super(Dconv_rand, self).__init__()
         print('cifar Dconv_rand is used')
         self.dilated_conv = nn.Conv2d(inplane, outplane, kernel_size=kernel_size, stride=stride, padding=padding,
-                                      bias=False)
+                                      bias=bias)
 
     def forward(self, x):
         x_shape = x.size()  # [128, 3, 32, 32]
